@@ -153,7 +153,7 @@ class Discriminator(Elaboratable):
         # this smaller value is guaranteed to have a max value equal to the 
         # detection window itself, hence we create a signal with less bits for this
         # distance result
-        readingProximityResult = Signal(unsigned(range(self.detectionWindowSpanCount + 1 )))
+        readingProximityResult = Signal(range(self.detectionWindowSpanCount + 1 ))
         
         inputFreqHigher = Signal()
         

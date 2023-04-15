@@ -244,16 +244,21 @@ def build(doBurn:bool=False):
     DevPlatform().build(
             Neptune(usingTuning=StandardGuitarTuning, 
                     samplingDurationSeconds=0.5), 
-            do_program=doBurn)
+            do_program=doBurn,
+            debug_verilog=True)
+
+
+def mainCLI(m:Module, dev:Neptune):
+    main(m, ports=dev.ports())
 
 
 if __name__ == "__main__":
     # allow us to run this directly
     from amaranth.cli import main
     
-    doBuild = False
+    doBuild = True
     doBurnAfterBuild = False
-    Test = True
+    Test = False
     
     if doBuild:
         build(doBurnAfterBuild)
@@ -264,7 +269,8 @@ if __name__ == "__main__":
         m = Module() # top level
         m.submodules.edgedetect = dev = Neptune(usingTuning=StandardGuitarTuning, 
                                                     samplingDurationSeconds=0.5)
-        main(m, ports=dev.ports())
+        mainCLI(m, dev)
+        
 
 
 
