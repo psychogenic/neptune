@@ -1,3 +1,17 @@
+# generated signal traces
+*.gtkw
+*.vcd
+
+
+# eclipse files
+.project
+.pydevproject
+.settings/
+
+# amaranth boards 
+amaranth_boards
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -127,3 +141,5 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
