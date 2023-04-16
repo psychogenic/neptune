@@ -1,7 +1,7 @@
 # neptune
 Flexible digital logic hardware frequency discriminator used as an extreeeeeme guitar tuner. 
 
-![Neptune Project](https://github.com/psychogenic/blob/main/img/neptune.jpg?raw=true)
+![Neptune Project](https://raw.githubusercontent.com/psychogenic/neptune/main/img/neptuneproject.jpg)
 
 &copy; 2023 Pat Deegan, [psychogenic.com](https://psychogenic.com)
 Released under the GPL, see the LICENSE file for details.
