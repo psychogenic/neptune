@@ -342,7 +342,7 @@ if __name__ == "__main__":
     doBurnAfterBuild = False
     
     doSimulate = False
-    Test = True
+    Test = False
     
     if doBuild:
         build(doBurnAfterBuild)

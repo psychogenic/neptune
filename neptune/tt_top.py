@@ -195,7 +195,7 @@ if __name__ == "__main__":
     import os
     top_name = os.environ.get("TOP", "neptune")
 
-    Test = True 
+    Test = False 
     if Test:
         samplingDurationSeconds = 0.25
     else:

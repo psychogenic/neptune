@@ -1,5 +1,5 @@
 /*
-    Neptune v1.0.1 for ICE40HX1K Blink evaluation board.
+    Neptune v1.0.1 fixed 32Hz window, for tinytapeout3.
     Copyright (C) 2023 Pat Deegan, https://psychogenic.com
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -13,9 +13,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-(* \amaranth.hierarchy  = "top.discriminator" *)
-(* generator = "Amaranth" *)
-module discriminator(note, match_exact, match_high, match_far, clk, rst, edge_count);
+module discriminator(rst, edge_count, note, match_exact, match_high, match_far, clk);
   reg \$auto$verilog_backend.cc:2097:dump_module$1  = 0;
   wire \$1 ;
   wire \$10 ;
@@ -128,13 +126,10 @@ module discriminator(note, match_exact, match_high, match_far, clk, rst, edge_co
     if (\$auto$verilog_backend.cc:2097:dump_module$1 ) begin end
     (* full_case = 32'd1 *)
     casez (curState)
-      /* \amaranth.decoding  = "Init/0" */
       3'h0:
           \curState$next  = 3'h1;
-      /* \amaranth.decoding  = "CalculateDiffFromTarget/1" */
       3'h1:
           \curState$next  = 3'h2;
-      /* \amaranth.decoding  = "Compare/2" */
       3'h2:
           (* full_case = 32'd1 *)
           casez (\$1 )
@@ -143,7 +138,6 @@ module discriminator(note, match_exact, match_high, match_far, clk, rst, edge_co
             default:
                 \curState$next  = 3'h3;
           endcase
-      /* \amaranth.decoding  = "MovedToNextCheckBounds/3" */
       3'h3:
           (* full_case = 32'd1 *)
           casez (\$3 )
@@ -152,13 +146,10 @@ module discriminator(note, match_exact, match_high, match_far, clk, rst, edge_co
             default:
                 \curState$next  = 3'h0;
           endcase
-      /* \amaranth.decoding  = "DetectedValidNote/4" */
       3'h4:
           \curState$next  = 3'h5;
-      /* \amaranth.decoding  = "DisplayResult/5" */
       3'h5:
           \curState$next  = 3'h0;
-      /* \amaranth.decoding  = {0{1'b0}} */
       default:
           \curState$next  = 3'h0;
     endcase
@@ -171,13 +162,10 @@ module discriminator(note, match_exact, match_high, match_far, clk, rst, edge_co
     if (\$auto$verilog_backend.cc:2097:dump_module$1 ) begin end
     \curNoteIndex$next  = curNoteIndex;
     casez (curState)
-      /* \amaranth.decoding  = "Init/0" */
       3'h0:
           \curNoteIndex$next  = 3'h0;
-      /* \amaranth.decoding  = "CalculateDiffFromTarget/1" */
       3'h1:
           /* empty */;
-      /* \amaranth.decoding  = "Compare/2" */
       3'h2:
           (* full_case = 32'd1 *)
           casez (\$5 )
@@ -196,16 +184,13 @@ module discriminator(note, match_exact, match_high, match_far, clk, rst, edge_co
     if (\$auto$verilog_backend.cc:2097:dump_module$1 ) begin end
     \note$next  = note;
     casez (curState)
-      /* \amaranth.decoding  = "Init/0" */
       3'h0:
           casez (\$10 )
             1'h1:
                 \note$next  = 3'h0;
           endcase
-      /* \amaranth.decoding  = "CalculateDiffFromTarget/1" */
       3'h1:
           /* empty */;
-      /* \amaranth.decoding  = "Compare/2" */
       3'h2:
           casez (\$12 )
             1'h1:
@@ -235,10 +220,8 @@ module discriminator(note, match_exact, match_high, match_far, clk, rst, edge_co
     if (\$auto$verilog_backend.cc:2097:dump_module$1 ) begin end
     \subtractResult$next  = subtractResult;
     casez (curState)
-      /* \amaranth.decoding  = "Init/0" */
       3'h0:
           /* empty */;
-      /* \amaranth.decoding  = "CalculateDiffFromTarget/1" */
       3'h1:
           (* full_case = 32'd1 *)
           casez (curNoteIndex)
@@ -265,16 +248,12 @@ module discriminator(note, match_exact, match_high, match_far, clk, rst, edge_co
     if (\$auto$verilog_backend.cc:2097:dump_module$1 ) begin end
     \noMatchCount$next  = noMatchCount;
     casez (curState)
-      /* \amaranth.decoding  = "Init/0" */
       3'h0:
           /* empty */;
-      /* \amaranth.decoding  = "CalculateDiffFromTarget/1" */
       3'h1:
           /* empty */;
-      /* \amaranth.decoding  = "Compare/2" */
       3'h2:
           /* empty */;
-      /* \amaranth.decoding  = "MovedToNextCheckBounds/3" */
       3'h3:
           (* full_case = 32'd1 *)
           casez (\$33 )
@@ -283,7 +262,6 @@ module discriminator(note, match_exact, match_high, match_far, clk, rst, edge_co
             default:
                 \noMatchCount$next  = \$36 [4:0];
           endcase
-      /* \amaranth.decoding  = "DetectedValidNote/4" */
       3'h4:
           \noMatchCount$next  = 5'h00;
     endcase
@@ -296,19 +274,14 @@ module discriminator(note, match_exact, match_high, match_far, clk, rst, edge_co
     if (\$auto$verilog_backend.cc:2097:dump_module$1 ) begin end
     \readingProximityResult$next  = readingProximityResult;
     casez (curState)
-      /* \amaranth.decoding  = "Init/0" */
       3'h0:
           /* empty */;
-      /* \amaranth.decoding  = "CalculateDiffFromTarget/1" */
       3'h1:
           /* empty */;
-      /* \amaranth.decoding  = "Compare/2" */
       3'h2:
           /* empty */;
-      /* \amaranth.decoding  = "MovedToNextCheckBounds/3" */
       3'h3:
           /* empty */;
-      /* \amaranth.decoding  = "DetectedValidNote/4" */
       3'h4:
           (* full_case = 32'd1 *)
           casez (\$38 )
@@ -327,19 +300,14 @@ module discriminator(note, match_exact, match_high, match_far, clk, rst, edge_co
     if (\$auto$verilog_backend.cc:2097:dump_module$1 ) begin end
     \inputFreqHigher$next  = inputFreqHigher;
     casez (curState)
-      /* \amaranth.decoding  = "Init/0" */
       3'h0:
           /* empty */;
-      /* \amaranth.decoding  = "CalculateDiffFromTarget/1" */
       3'h1:
           /* empty */;
-      /* \amaranth.decoding  = "Compare/2" */
       3'h2:
           /* empty */;
-      /* \amaranth.decoding  = "MovedToNextCheckBounds/3" */
       3'h3:
           /* empty */;
-      /* \amaranth.decoding  = "DetectedValidNote/4" */
       3'h4:
           (* full_case = 32'd1 *)
           casez (\$43 )
@@ -358,22 +326,16 @@ module discriminator(note, match_exact, match_high, match_far, clk, rst, edge_co
     if (\$auto$verilog_backend.cc:2097:dump_module$1 ) begin end
     \match_exact$next  = match_exact;
     casez (curState)
-      /* \amaranth.decoding  = "Init/0" */
       3'h0:
           /* empty */;
-      /* \amaranth.decoding  = "CalculateDiffFromTarget/1" */
       3'h1:
           /* empty */;
-      /* \amaranth.decoding  = "Compare/2" */
       3'h2:
           /* empty */;
-      /* \amaranth.decoding  = "MovedToNextCheckBounds/3" */
       3'h3:
           /* empty */;
-      /* \amaranth.decoding  = "DetectedValidNote/4" */
       3'h4:
           /* empty */;
-      /* \amaranth.decoding  = "DisplayResult/5" */
       3'h5:
           (* full_case = 32'd1 *)
           casez (\$45 )
@@ -392,22 +354,16 @@ module discriminator(note, match_exact, match_high, match_far, clk, rst, edge_co
     if (\$auto$verilog_backend.cc:2097:dump_module$1 ) begin end
     \match_far$next  = match_far;
     casez (curState)
-      /* \amaranth.decoding  = "Init/0" */
       3'h0:
           /* empty */;
-      /* \amaranth.decoding  = "CalculateDiffFromTarget/1" */
       3'h1:
           /* empty */;
-      /* \amaranth.decoding  = "Compare/2" */
       3'h2:
           /* empty */;
-      /* \amaranth.decoding  = "MovedToNextCheckBounds/3" */
       3'h3:
           /* empty */;
-      /* \amaranth.decoding  = "DetectedValidNote/4" */
       3'h4:
           /* empty */;
-      /* \amaranth.decoding  = "DisplayResult/5" */
       3'h5:
           (* full_case = 32'd1 *)
           casez (\$47 )
@@ -432,22 +388,16 @@ module discriminator(note, match_exact, match_high, match_far, clk, rst, edge_co
     if (\$auto$verilog_backend.cc:2097:dump_module$1 ) begin end
     \match_high$next  = match_high;
     casez (curState)
-      /* \amaranth.decoding  = "Init/0" */
       3'h0:
           /* empty */;
-      /* \amaranth.decoding  = "CalculateDiffFromTarget/1" */
       3'h1:
           /* empty */;
-      /* \amaranth.decoding  = "Compare/2" */
       3'h2:
           /* empty */;
-      /* \amaranth.decoding  = "MovedToNextCheckBounds/3" */
       3'h3:
           /* empty */;
-      /* \amaranth.decoding  = "DetectedValidNote/4" */
       3'h4:
           /* empty */;
-      /* \amaranth.decoding  = "DisplayResult/5" */
       3'h5:
           \match_high$next  = inputFreqHigher;
     endcase
@@ -467,9 +417,7 @@ module discriminator(note, match_exact, match_high, match_far, clk, rst, edge_co
   assign \$40  = \$41 ;
 endmodule
 
-(* \amaranth.hierarchy  = "top.display" *)
-(* generator = "Amaranth" *)
-module display(valueProxim, segments, proximitySelect, clk, rst, valueNote);
+module display(rst, valueNote, valueProxim, segments, proximitySelect, clk);
   reg \$auto$verilog_backend.cc:2097:dump_module$2  = 0;
   wire \$1 ;
   wire \$3 ;
@@ -561,9 +509,7 @@ module display(valueProxim, segments, proximitySelect, clk, rst, valueNote);
   end
 endmodule
 
-(* \amaranth.hierarchy  = "top.pulsecounter.edge_detect" *)
-(* generator = "Amaranth" *)
-module edge_detect(\input , \output , rst, clk);
+module edge_detect(rst, \input , \output , clk);
   reg \$auto$verilog_backend.cc:2097:dump_module$3  = 0;
   wire \$1 ;
   wire \$3 ;
@@ -626,9 +572,7 @@ module edge_detect(\input , \output , rst, clk);
   end
 endmodule
 
-(* \amaranth.hierarchy  = "top.pulsecounter.edge_detect.ffsync" *)
-(* generator = "Amaranth" *)
-module ffsync(\input , rst, syncOut, clk);
+module ffsync(rst, \input , syncOut, clk);
   input clk;
   wire clk;
   input \input ;
@@ -650,8 +594,38 @@ module ffsync(\input , rst, syncOut, clk);
   assign \stage0$next  = \input ;
 endmodule
 
-(* \amaranth.hierarchy  = "top.display.notedisplay" *)
-(* generator = "Amaranth" *)
+module neptune(io_in, io_out);
+  wire clock;
+  wire input_pulses;
+  input [7:0] io_in;
+  wire [7:0] io_in;
+  output [7:0] io_out;
+  wire [7:0] io_out;
+  wire reset;
+  wire tuner_clk;
+  wire [1:0] tuner_clock_config;
+  wire [7:0] tuner_displaySegments;
+  wire tuner_displaySelect;
+  wire tuner_input_pulses;
+  wire tuner_rst;
+  tuner tuner (
+    .clk(tuner_clk),
+    .clock_config(tuner_clock_config),
+    .displaySegments(tuner_displaySegments),
+    .displaySelect(tuner_displaySelect),
+    .input_pulses(tuner_input_pulses),
+    .rst(tuner_rst)
+  );
+  assign io_out = { tuner_displaySelect, tuner_displaySegments[6:0] };
+  assign tuner_input_pulses = input_pulses;
+  assign tuner_clock_config = io_in[3:2];
+  assign tuner_rst = io_in[1];
+  assign tuner_clk = io_in[0];
+  assign reset = io_in[1];
+  assign clock = io_in[0];
+  assign input_pulses = io_in[4];
+endmodule
+
 module notedisplay(rst, value, segments, clk);
   reg \$auto$verilog_backend.cc:2097:dump_module$4  = 0;
   wire \$1 ;
@@ -701,200 +675,6 @@ module notedisplay(rst, value, segments, clk);
   end
 endmodule
 
-(* \amaranth.hierarchy  = "top.pin_devinputs_0__clkconf0" *)
-(* generator = "Amaranth" *)
-module pin_devinputs_0__clkconf0(devinputs_0__clkconf0__io, devinputs_0__clkconf0__i);
-  output devinputs_0__clkconf0__i;
-  wire devinputs_0__clkconf0__i;
-  inout devinputs_0__clkconf0__io;
-  wire devinputs_0__clkconf0__io;
-  SB_IO #(
-    .IO_STANDARD("SB_LVCMOS"),
-    .PIN_TYPE(6'h01)
-  ) devinputs_0__clkconf0_0 (
-    .D_IN_0(devinputs_0__clkconf0__i),
-    .PACKAGE_PIN(devinputs_0__clkconf0__io)
-  );
-endmodule
-
-(* \amaranth.hierarchy  = "top.pin_devinputs_0__clkconf1" *)
-(* generator = "Amaranth" *)
-module pin_devinputs_0__clkconf1(devinputs_0__clkconf1__io, devinputs_0__clkconf1__i);
-  output devinputs_0__clkconf1__i;
-  wire devinputs_0__clkconf1__i;
-  inout devinputs_0__clkconf1__io;
-  wire devinputs_0__clkconf1__io;
-  SB_IO #(
-    .IO_STANDARD("SB_LVCMOS"),
-    .PIN_TYPE(6'h01)
-  ) devinputs_0__clkconf1_0 (
-    .D_IN_0(devinputs_0__clkconf1__i),
-    .PACKAGE_PIN(devinputs_0__clkconf1__io)
-  );
-endmodule
-
-(* \amaranth.hierarchy  = "top.pin_devinputs_0__extclk" *)
-(* generator = "Amaranth" *)
-module pin_devinputs_0__extclk(devinputs_0__extclk__io, devinputs_0__extclk__i);
-  output devinputs_0__extclk__i;
-  wire devinputs_0__extclk__i;
-  inout devinputs_0__extclk__io;
-  wire devinputs_0__extclk__io;
-  SB_IO #(
-    .IO_STANDARD("SB_LVCMOS"),
-    .PIN_TYPE(6'h01)
-  ) devinputs_0__extclk_0 (
-    .D_IN_0(devinputs_0__extclk__i),
-    .PACKAGE_PIN(devinputs_0__extclk__io)
-  );
-endmodule
-
-(* \amaranth.hierarchy  = "top.pin_devinputs_0__signal" *)
-(* generator = "Amaranth" *)
-module pin_devinputs_0__signal(devinputs_0__signal__io, devinputs_0__signal__i);
-  output devinputs_0__signal__i;
-  wire devinputs_0__signal__i;
-  inout devinputs_0__signal__io;
-  wire devinputs_0__signal__io;
-  SB_IO #(
-    .IO_STANDARD("SB_LVCMOS"),
-    .PIN_TYPE(6'h01)
-  ) devinputs_0__signal_0 (
-    .D_IN_0(devinputs_0__signal__i),
-    .PACKAGE_PIN(devinputs_0__signal__io)
-  );
-endmodule
-
-(* \amaranth.hierarchy  = "top.pin_dualdisp_0__aa" *)
-(* generator = "Amaranth" *)
-module pin_dualdisp_0__aa(dualdisp_0__aa__io, dualdisp_0__aa__o);
-  inout dualdisp_0__aa__io;
-  wire dualdisp_0__aa__io;
-  input dualdisp_0__aa__o;
-  wire dualdisp_0__aa__o;
-  SB_IO #(
-    .IO_STANDARD("SB_LVCMOS"),
-    .PIN_TYPE(6'h19)
-  ) dualdisp_0__aa_0 (
-    .D_OUT_0(dualdisp_0__aa__o),
-    .PACKAGE_PIN(dualdisp_0__aa__io)
-  );
-endmodule
-
-(* \amaranth.hierarchy  = "top.pin_dualdisp_0__ab" *)
-(* generator = "Amaranth" *)
-module pin_dualdisp_0__ab(dualdisp_0__ab__io, dualdisp_0__ab__o);
-  inout dualdisp_0__ab__io;
-  wire dualdisp_0__ab__io;
-  input dualdisp_0__ab__o;
-  wire dualdisp_0__ab__o;
-  SB_IO #(
-    .IO_STANDARD("SB_LVCMOS"),
-    .PIN_TYPE(6'h19)
-  ) dualdisp_0__ab_0 (
-    .D_OUT_0(dualdisp_0__ab__o),
-    .PACKAGE_PIN(dualdisp_0__ab__io)
-  );
-endmodule
-
-(* \amaranth.hierarchy  = "top.pin_dualdisp_0__ac" *)
-(* generator = "Amaranth" *)
-module pin_dualdisp_0__ac(dualdisp_0__ac__io, dualdisp_0__ac__o);
-  inout dualdisp_0__ac__io;
-  wire dualdisp_0__ac__io;
-  input dualdisp_0__ac__o;
-  wire dualdisp_0__ac__o;
-  SB_IO #(
-    .IO_STANDARD("SB_LVCMOS"),
-    .PIN_TYPE(6'h19)
-  ) dualdisp_0__ac_0 (
-    .D_OUT_0(dualdisp_0__ac__o),
-    .PACKAGE_PIN(dualdisp_0__ac__io)
-  );
-endmodule
-
-(* \amaranth.hierarchy  = "top.pin_dualdisp_0__ad" *)
-(* generator = "Amaranth" *)
-module pin_dualdisp_0__ad(dualdisp_0__ad__io, dualdisp_0__ad__o);
-  inout dualdisp_0__ad__io;
-  wire dualdisp_0__ad__io;
-  input dualdisp_0__ad__o;
-  wire dualdisp_0__ad__o;
-  SB_IO #(
-    .IO_STANDARD("SB_LVCMOS"),
-    .PIN_TYPE(6'h19)
-  ) dualdisp_0__ad_0 (
-    .D_OUT_0(dualdisp_0__ad__o),
-    .PACKAGE_PIN(dualdisp_0__ad__io)
-  );
-endmodule
-
-(* \amaranth.hierarchy  = "top.pin_dualdisp_0__ae" *)
-(* generator = "Amaranth" *)
-module pin_dualdisp_0__ae(dualdisp_0__ae__io, dualdisp_0__ae__o);
-  inout dualdisp_0__ae__io;
-  wire dualdisp_0__ae__io;
-  input dualdisp_0__ae__o;
-  wire dualdisp_0__ae__o;
-  SB_IO #(
-    .IO_STANDARD("SB_LVCMOS"),
-    .PIN_TYPE(6'h19)
-  ) dualdisp_0__ae_0 (
-    .D_OUT_0(dualdisp_0__ae__o),
-    .PACKAGE_PIN(dualdisp_0__ae__io)
-  );
-endmodule
-
-(* \amaranth.hierarchy  = "top.pin_dualdisp_0__af" *)
-(* generator = "Amaranth" *)
-module pin_dualdisp_0__af(dualdisp_0__af__io, dualdisp_0__af__o);
-  inout dualdisp_0__af__io;
-  wire dualdisp_0__af__io;
-  input dualdisp_0__af__o;
-  wire dualdisp_0__af__o;
-  SB_IO #(
-    .IO_STANDARD("SB_LVCMOS"),
-    .PIN_TYPE(6'h19)
-  ) dualdisp_0__af_0 (
-    .D_OUT_0(dualdisp_0__af__o),
-    .PACKAGE_PIN(dualdisp_0__af__io)
-  );
-endmodule
-
-(* \amaranth.hierarchy  = "top.pin_dualdisp_0__ag" *)
-(* generator = "Amaranth" *)
-module pin_dualdisp_0__ag(dualdisp_0__ag__io, dualdisp_0__ag__o);
-  inout dualdisp_0__ag__io;
-  wire dualdisp_0__ag__io;
-  input dualdisp_0__ag__o;
-  wire dualdisp_0__ag__o;
-  SB_IO #(
-    .IO_STANDARD("SB_LVCMOS"),
-    .PIN_TYPE(6'h19)
-  ) dualdisp_0__ag_0 (
-    .D_OUT_0(dualdisp_0__ag__o),
-    .PACKAGE_PIN(dualdisp_0__ag__io)
-  );
-endmodule
-
-(* \amaranth.hierarchy  = "top.pin_dualdisp_0__cathode" *)
-(* generator = "Amaranth" *)
-module pin_dualdisp_0__cathode(dualdisp_0__cathode__io, dualdisp_0__cathode__o);
-  inout dualdisp_0__cathode__io;
-  wire dualdisp_0__cathode__io;
-  input dualdisp_0__cathode__o;
-  wire dualdisp_0__cathode__o;
-  SB_IO #(
-    .IO_STANDARD("SB_LVCMOS"),
-    .PIN_TYPE(6'h19)
-  ) dualdisp_0__cathode_0 (
-    .D_OUT_0(dualdisp_0__cathode__o),
-    .PACKAGE_PIN(dualdisp_0__cathode__io)
-  );
-endmodule
-
-(* \amaranth.hierarchy  = "top.display.proxdisplay" *)
-(* generator = "Amaranth" *)
 module proxdisplay(rst, value, segments, clk);
   reg \$auto$verilog_backend.cc:2097:dump_module$5  = 0;
   wire \$1 ;
@@ -944,9 +724,7 @@ module proxdisplay(rst, value, segments, clk);
   end
 endmodule
 
-(* \amaranth.hierarchy  = "top.pulsecounter" *)
-(* generator = "Amaranth" *)
-module pulsecounter(clock_config, pulseCount, clk, rst, \input );
+module pulsecounter(rst, \input , clock_config, pulseCount, clk);
   reg \$auto$verilog_backend.cc:2097:dump_module$6  = 0;
   wire [11:0] \$1 ;
   wire \$10 ;
@@ -1072,148 +850,55 @@ module pulsecounter(clock_config, pulseCount, clk, rst, \input );
   assign edge_detect_input = \input ;
 endmodule
 
-(* \amaranth.hierarchy  = "top" *)
-(* top =  1  *)
-(* generator = "Amaranth" *)
-module top(dualdisp_0__af__io, dualdisp_0__ag__io, dualdisp_0__cathode__io, dualdisp_0__aa__io, dualdisp_0__ab__io, dualdisp_0__ac__io, dualdisp_0__ad__io, devinputs_0__signal__io, devinputs_0__clkconf0__io, devinputs_0__clkconf1__io, devinputs_0__extclk__io, dualdisp_0__ae__io);
+module tuner(rst, clock_config, input_pulses, displaySegments, displaySelect, clk);
+  input clk;
+  wire clk;
+  input [1:0] clock_config;
   wire [1:0] clock_config;
-  inout devinputs_0__clkconf0__io;
-  wire devinputs_0__clkconf0__io;
-  inout devinputs_0__clkconf1__io;
-  wire devinputs_0__clkconf1__io;
-  inout devinputs_0__extclk__io;
-  wire devinputs_0__extclk__io;
-  inout devinputs_0__signal__io;
-  wire devinputs_0__signal__io;
   wire [7:0] discriminator_edge_count;
   wire discriminator_match_exact;
   wire discriminator_match_far;
   wire discriminator_match_high;
   wire [2:0] discriminator_note;
+  output [7:0] displaySegments;
   wire [7:0] displaySegments;
+  output displaySelect;
   wire displaySelect;
   wire display_proximitySelect;
   wire [7:0] display_segments;
   wire [2:0] display_valueNote;
   wire [2:0] display_valueProxim;
-  inout dualdisp_0__aa__io;
-  wire dualdisp_0__aa__io;
-  inout dualdisp_0__ab__io;
-  wire dualdisp_0__ab__io;
-  inout dualdisp_0__ac__io;
-  wire dualdisp_0__ac__io;
-  inout dualdisp_0__ad__io;
-  wire dualdisp_0__ad__io;
-  inout dualdisp_0__ae__io;
-  wire dualdisp_0__ae__io;
-  inout dualdisp_0__af__io;
-  wire dualdisp_0__af__io;
-  inout dualdisp_0__ag__io;
-  wire dualdisp_0__ag__io;
-  inout dualdisp_0__cathode__io;
-  wire dualdisp_0__cathode__io;
+  input input_pulses;
   wire input_pulses;
-  wire pin_devinputs_0__clkconf0_devinputs_0__clkconf0__i;
-  wire pin_devinputs_0__clkconf1_devinputs_0__clkconf1__i;
-  wire pin_devinputs_0__extclk_devinputs_0__extclk__i;
-  wire pin_devinputs_0__signal_devinputs_0__signal__i;
-  wire pin_dualdisp_0__aa_dualdisp_0__aa__o;
-  wire pin_dualdisp_0__ab_dualdisp_0__ab__o;
-  wire pin_dualdisp_0__ac_dualdisp_0__ac__o;
-  wire pin_dualdisp_0__ad_dualdisp_0__ad__o;
-  wire pin_dualdisp_0__ae_dualdisp_0__ae__o;
-  wire pin_dualdisp_0__af_dualdisp_0__af__o;
-  wire pin_dualdisp_0__ag_dualdisp_0__ag__o;
-  wire pin_dualdisp_0__cathode_dualdisp_0__cathode__o;
-  wire pulsecounter_clk;
   wire [1:0] pulsecounter_clock_config;
   wire pulsecounter_input;
   wire [10:0] pulsecounter_pulseCount;
-  wire pulsecounter_rst;
+  input rst;
+  wire rst;
   discriminator discriminator (
-    .clk(pulsecounter_clk),
+    .clk(clk),
     .edge_count(discriminator_edge_count),
     .match_exact(discriminator_match_exact),
     .match_far(discriminator_match_far),
     .match_high(discriminator_match_high),
     .note(discriminator_note),
-    .rst(1'h0)
+    .rst(rst)
   );
   display display (
-    .clk(pulsecounter_clk),
+    .clk(clk),
     .proximitySelect(display_proximitySelect),
-    .rst(1'h0),
+    .rst(rst),
     .segments(display_segments),
     .valueNote(display_valueNote),
     .valueProxim(display_valueProxim)
   );
-  pin_devinputs_0__clkconf0 pin_devinputs_0__clkconf0 (
-    .devinputs_0__clkconf0__i(pin_devinputs_0__clkconf0_devinputs_0__clkconf0__i),
-    .devinputs_0__clkconf0__io(devinputs_0__clkconf0__io)
-  );
-  pin_devinputs_0__clkconf1 pin_devinputs_0__clkconf1 (
-    .devinputs_0__clkconf1__i(pin_devinputs_0__clkconf1_devinputs_0__clkconf1__i),
-    .devinputs_0__clkconf1__io(devinputs_0__clkconf1__io)
-  );
-  pin_devinputs_0__extclk pin_devinputs_0__extclk (
-    .devinputs_0__extclk__i(pin_devinputs_0__extclk_devinputs_0__extclk__i),
-    .devinputs_0__extclk__io(devinputs_0__extclk__io)
-  );
-  pin_devinputs_0__signal pin_devinputs_0__signal (
-    .devinputs_0__signal__i(pin_devinputs_0__signal_devinputs_0__signal__i),
-    .devinputs_0__signal__io(devinputs_0__signal__io)
-  );
-  pin_dualdisp_0__aa pin_dualdisp_0__aa (
-    .dualdisp_0__aa__io(dualdisp_0__aa__io),
-    .dualdisp_0__aa__o(pin_dualdisp_0__aa_dualdisp_0__aa__o)
-  );
-  pin_dualdisp_0__ab pin_dualdisp_0__ab (
-    .dualdisp_0__ab__io(dualdisp_0__ab__io),
-    .dualdisp_0__ab__o(pin_dualdisp_0__ab_dualdisp_0__ab__o)
-  );
-  pin_dualdisp_0__ac pin_dualdisp_0__ac (
-    .dualdisp_0__ac__io(dualdisp_0__ac__io),
-    .dualdisp_0__ac__o(pin_dualdisp_0__ac_dualdisp_0__ac__o)
-  );
-  pin_dualdisp_0__ad pin_dualdisp_0__ad (
-    .dualdisp_0__ad__io(dualdisp_0__ad__io),
-    .dualdisp_0__ad__o(pin_dualdisp_0__ad_dualdisp_0__ad__o)
-  );
-  pin_dualdisp_0__ae pin_dualdisp_0__ae (
-    .dualdisp_0__ae__io(dualdisp_0__ae__io),
-    .dualdisp_0__ae__o(pin_dualdisp_0__ae_dualdisp_0__ae__o)
-  );
-  pin_dualdisp_0__af pin_dualdisp_0__af (
-    .dualdisp_0__af__io(dualdisp_0__af__io),
-    .dualdisp_0__af__o(pin_dualdisp_0__af_dualdisp_0__af__o)
-  );
-  pin_dualdisp_0__ag pin_dualdisp_0__ag (
-    .dualdisp_0__ag__io(dualdisp_0__ag__io),
-    .dualdisp_0__ag__o(pin_dualdisp_0__ag_dualdisp_0__ag__o)
-  );
-  pin_dualdisp_0__cathode pin_dualdisp_0__cathode (
-    .dualdisp_0__cathode__io(dualdisp_0__cathode__io),
-    .dualdisp_0__cathode__o(pin_dualdisp_0__cathode_dualdisp_0__cathode__o)
-  );
   pulsecounter pulsecounter (
-    .clk(pulsecounter_clk),
+    .clk(clk),
     .clock_config(pulsecounter_clock_config),
     .\input (pulsecounter_input),
     .pulseCount(pulsecounter_pulseCount),
-    .rst(1'h0)
+    .rst(rst)
   );
-  assign pulsecounter_rst = 1'h0;
-  assign clock_config = { pin_devinputs_0__clkconf1_devinputs_0__clkconf1__i, pin_devinputs_0__clkconf0_devinputs_0__clkconf0__i };
-  assign input_pulses = pin_devinputs_0__signal_devinputs_0__signal__i;
-  assign pulsecounter_clk = pin_devinputs_0__extclk_devinputs_0__extclk__i;
-  assign pin_dualdisp_0__cathode_dualdisp_0__cathode__o = displaySelect;
-  assign pin_dualdisp_0__ag_dualdisp_0__ag__o = displaySegments[1];
-  assign pin_dualdisp_0__af_dualdisp_0__af__o = displaySegments[2];
-  assign pin_dualdisp_0__ae_dualdisp_0__ae__o = displaySegments[3];
-  assign pin_dualdisp_0__ad_dualdisp_0__ad__o = displaySegments[4];
-  assign pin_dualdisp_0__ac_dualdisp_0__ac__o = displaySegments[5];
-  assign pin_dualdisp_0__ab_dualdisp_0__ab__o = displaySegments[6];
-  assign pin_dualdisp_0__aa_dualdisp_0__aa__o = displaySegments[7];
   assign displaySelect = display_proximitySelect;
   assign displaySegments = display_segments;
   assign display_valueProxim = { discriminator_match_far, discriminator_match_high, discriminator_match_exact };
@@ -1222,3 +907,4 @@ module top(dualdisp_0__af__io, dualdisp_0__ag__io, dualdisp_0__cathode__io, dual
   assign pulsecounter_clock_config = clock_config;
   assign pulsecounter_input = input_pulses;
 endmodule
+
