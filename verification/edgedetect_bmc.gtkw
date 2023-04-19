@@ -1,0 +1,29 @@
+[*]
+[*] GTKWave Analyzer v3.4.0 (w)1999-2022 BSI
+[*] Tue Apr 18 22:13:10 2023
+[*]
+[dumpfile] "verification/edgedetect_bmc/engine_0/trace.vcd"
+[dumpfile_mtime] "Tue Apr 18 22:12:16 2023"
+[dumpfile_size] 4049
+[savefile] "verification/edgedetect.gtkw"
+[timestart] 0
+[size] 3366 1359
+[pos] -84 -84
+*-1.217050 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[sst_width] 343
+[signals_width] 330
+[sst_expanded] 1
+[sst_vpaned_height] 422
+@28
+top.history.input
+top.history.output
+@22
+top.history.sighist_0[99:0]
+top.history.sighist_1[99:0]
+@28
+top.history.clk
+@23
+top.history.count[6:0]
+[pattern_trace] 1
+[pattern_trace] 0

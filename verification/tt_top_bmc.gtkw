@@ -1,0 +1,25 @@
+[*]
+[*] GTKWave Analyzer v3.4.0 (w)1999-2022 BSI
+[*] Wed Apr 19 15:42:12 2023
+[*]
+[dumpfile] "verification/tt_top_bmc/engine_0/trace.vcd"
+[dumpfile_mtime] "Wed Apr 19 15:38:03 2023"
+[dumpfile_size] 539874
+[savefile] "verification/tt_top_v.gtkw"
+[timestart] 1197
+[size] 3366 1359
+[pos] -39 -39
+*-2.642505 1267 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[sst_width] 343
+[signals_width] 550
+[sst_expanded] 1
+[sst_vpaned_height] 421
+@28
+top.input_pulses
+top.io_out[7:0]
+@2029
+^1 verification/sevseg-translate.txt
+top.tuner_displaySegments[7:0]
+[pattern_trace] 1
+[pattern_trace] 0

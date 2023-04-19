@@ -1,0 +1,33 @@
+[*]
+[*] GTKWave Analyzer v3.4.0 (w)1999-2022 BSI
+[*] Wed Apr 19 02:55:40 2023
+[*]
+[dumpfile] "verification/tuner_cover/engine_0/trace0.vcd"
+[dumpfile_mtime] "Wed Apr 19 02:52:42 2023"
+[dumpfile_size] 2354440
+[savefile] "verification/tuner.gtkw"
+[timestart] 2382
+[size] 3366 1359
+[pos] -1 -1
+*-4.800000 2526 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.tuner.
+[treeopen] top.tuner.pulsecounter.
+[treeopen] top.tuner.pulsecounter.edge_detect.
+[sst_width] 343
+[signals_width] 490
+[sst_expanded] 1
+[sst_vpaned_height] 404
+@28
+top.tuner.input_pulses
+@2028
+[color] 2
+^1 verification/sevseg-translate.txt
+top.tuner.display_segments[7:0]
+@24
+top.tuner.pulsecounter.pulseCount[9:0]
+top.tuner.pulsecounter.clockCount[9:0]
+@29
+top.tuner.clk
+[pattern_trace] 1
+[pattern_trace] 0

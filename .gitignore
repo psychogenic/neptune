@@ -1,5 +1,4 @@
 # generated signal traces
-*.gtkw
 *.vcd
 
 
@@ -11,6 +10,10 @@
 # amaranth boards 
 amaranth_boards
 
+#verification stuff
+verification/*.il
+verification/*_bmc
+verification/*_cover
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

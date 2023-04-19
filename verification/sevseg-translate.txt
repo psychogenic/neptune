@@ -1,0 +1,19 @@
+#translate file for 7-seg display, gtkwave
+# prox
+00101010	LOW,close
+00111000	LOW,far
+01000110	HI,close
+11000100	HI,far
+00000001	exact
+
+# Notes
+00000010	NO
+11101110	A
+00111110	B
+10111110	B
+10011100	C
+01111000	D
+10011110	E
+10001110	F
+11110110	G
+

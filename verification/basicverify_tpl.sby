@@ -1,0 +1,19 @@
+[tasks]
+cover
+bmc
+
+[options]
+bmc: mode bmc
+cover: mode cover
+depth 40
+multiclock off
+
+[engines]
+smtbmc boolector
+
+[script]
+read_ilang ILFILENAME
+prep -top top
+
+[files]
+verification/ILFILENAME

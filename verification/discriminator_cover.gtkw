@@ -1,0 +1,37 @@
+[*]
+[*] GTKWave Analyzer v3.4.0 (w)1999-2022 BSI
+[*] Wed Apr 19 01:58:26 2023
+[*]
+[dumpfile] "verification/discriminator_cover/engine_0/trace0.vcd"
+[dumpfile_mtime] "Wed Apr 19 01:57:50 2023"
+[dumpfile_size] 100791
+[savefile] "verification/discriminator_cover.gtkw"
+[timestart] 0
+[size] 3366 1359
+[pos] -1 -1
+*-5.790932 54 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[sst_width] 736
+[signals_width] 570
+[sst_expanded] 1
+[sst_vpaned_height] 371
+@24
+top.discriminator.edge_count[8:0]
+[color] 1
+top.discriminator.note[2:0]
+top.discriminator.curState[2:0]
+@28
+top.discriminator.clk
+@25
+top._history.ticks[5:0]
+@28
+[color] 2
+top.discriminator.match_exact
+[color] 2
+top.discriminator.match_high
+[color] 2
+top.discriminator.match_far
+@24
+top.discriminator.readingProximityResult[5:0]
+[pattern_trace] 1
+[pattern_trace] 0
