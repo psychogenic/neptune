@@ -55,3 +55,11 @@ The platform is selected in `neptune/neptune_config.py` but if you're using
 something other than the  iCE40HX1K Blink I'm using, you'll likely need to adjust the wireForPlatform() in tuner.py
 somewhat.
 
+## Resources
+
+Other than the [Amaranth docs](https://amaranth-lang.org/docs/amaranth/latest/intro.html) themselves, Robert Baruch put out some amazing content: I first learned to use it while he was [building a 6800 CPU](https://www.youtube.com/playlist?list=PLEeZWGE3PwbbjxV7_XnPSR7ouLR2zjktw) and there's a [more recent project](https://www.youtube.com/playlist?list=PLEeZWGE3PwbZTypHq00G-yEX8TEI95lw4) also using it (both while it was still called nMigen).  Lot of hours, but was much fun.
+
+Finally, there's a nice summary of all those videos in the [Amaranth tutorial](https://github.com/RobertBaruch/amaranth-tutorial) he also put out.
+
+
+
