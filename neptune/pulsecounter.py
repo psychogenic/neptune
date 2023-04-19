@@ -19,15 +19,17 @@ Created on Apr 12, 2023
 '''
 
 import math
-from amaranth import Signal, Elaboratable, Module, Const
+from amaranth import Signal, Elaboratable, Module, Const, ResetSignal
+from amaranth.asserts import Assert, Assume, Cover
 from amaranth.build import Platform
 from amaranth.sim import Delay
 
-from neptune.in_clock import ClockOptions, ClockName
-
-from neptune.sims.runner import runSimulator
-
+import neptune.neptune_config as config 
 from neptune.edgedetect import EdgeDetect
+
+from neptune.in_clock import ClockOptions, ClockName
+from neptune.sims.runner import runSimulator
+from neptune.testing.history import History
 
 class PulseCounter(Elaboratable):
     '''
@@ -42,8 +44,8 @@ class PulseCounter(Elaboratable):
         @see: in_clock for valid clock rates and corresponding bit settings
     '''
     
-    def __init__(self, synchronizerNumStages:int=2, 
-                 samplingDurationSeconds:float=1.0):
+    def __init__(self, synchronizerNumStages:int=config.NumInputSynchronizerStagesDefault, 
+                 samplingDurationSeconds:float=config.SamplingDurationDefault):
         
         self.samplingDurationSeconds = samplingDurationSeconds
         
@@ -76,7 +78,7 @@ class PulseCounter(Elaboratable):
         
         
     def ports(self):
-        return [self.input, self.output]
+        return [self.input, self.pulseCount]
     
     def elaborate(self, platform:Platform):
         m = Module()
@@ -129,8 +131,27 @@ class PulseCounter(Elaboratable):
             
         return m
     
+
+def coverAndProve(m:Module, counter:PulseCounter, includeCovers:bool=False):
+    # Note: I have a condition below that makes the period 0.1s -- so 
+    # during testing we only need to count a bit past 100 ticks to see results
+    rst = Signal()
+    m.d.comb += ResetSignal().eq(rst)
+    m.d.comb += [
+        Assume(~rst), # don't play with reset
+        Assume(counter.clock_config == 0), # 1khz Clock
+    ]
     
-def test():
+    hist = History.new(m, 110)
+    hist.track(counter.input)
+    with m.If( hist.sequence(counter.input, 0, 12) == 0b010101010101):
+        with m.If(hist.ticks == 105):
+            m.d.comb += Assert(counter.pulseCount >= 5)
+    
+    if includeCovers:
+        m.d.comb += Cover(counter.pulseCount == 40)
+
+def simulate():
     m = Module() # top
     m.submodules.pulsecounter = dut = PulseCounter(samplingDurationSeconds=1.0)
     
@@ -164,12 +185,21 @@ def test():
 if __name__ == "__main__":
     # allow us to run this directly
     from amaranth.cli import main
+    doSimulate = False
     Test = True
-    if (Test):
-        test()
+    if (doSimulate):
+        simulate()
     else:
+        if Test:
+            samplingDurationSeconds = 0.1
+        else:
+            samplingDurationSeconds = config.SamplingDurationDefault
+            
         m = Module() # top level
-        m.submodules.pulsecounter = dev = PulseCounter()
+        m.submodules.pulsecounter = dev = PulseCounter(samplingDurationSeconds=samplingDurationSeconds)
+        if Test:
+            coverAndProve(m, dev)
+            
         main(m, ports=dev.ports())
 
 

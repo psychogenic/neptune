@@ -21,7 +21,8 @@ import sys
 
 # try to use a sane value here, something that is a 2**n is nice
 MaxDetectionHzWindowDefault = 32
-
+SamplingDurationDefault = 0.5
+NumInputSynchronizerStagesDefault = 2
 
 
 class DummyPlatform:

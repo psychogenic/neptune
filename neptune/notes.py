@@ -91,19 +91,19 @@ class Tuning:
     
     
     @property 
-    def notes(self) -> list[DetectedNote]:
+    def notes(self): #  -> list[DetectedNote]:
         return self._notes.values()
     
     @property 
-    def note_names(self) -> list[str]:
+    def note_names(self): #  -> list[str]:
         return list(self._notes.keys())
     
     @property
-    def ascending(self) -> list[DetectedNote]:
+    def ascending(self): #  -> list[DetectedNote]:
         return list(sorted(self._notes.values(), key=lambda n: n.frequency))
     
     @property 
-    def descending(self) -> list[DetectedNote]:
+    def descending(self): # -> list[DetectedNote]:
         return reversed(self.ascending)
     
     @property

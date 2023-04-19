@@ -20,12 +20,14 @@ Created on Apr 12, 2023
 import math
 from enum import Enum, unique
 
-from amaranth import Elaboratable, Signal, Module, Const, Array, unsigned
+from amaranth import Elaboratable, Signal, Module, Const, Array, unsigned, ResetSignal
 from amaranth.build import Platform
+from amaranth.asserts import Assert, Assume, Cover
 
 import neptune.notes as notes
 from neptune.notes import Tuning, DetectedNote
 import neptune.neptune_config as config
+from neptune.testing.history import History
 
 
 # FSM states
@@ -39,6 +41,8 @@ class DiscriminatorState(Enum):
     DisplayResult           = 5
     
     
+
+    
 class Discriminator(Elaboratable):
     '''
         The Discriminator does all the heavy lifting in Neptune: its what tells the 
@@ -50,7 +54,7 @@ class Discriminator(Elaboratable):
     '''
     
     def __init__(self, usingTuning:Tuning, # the set of notes we care about
-                 samplingDurationSeconds:float=1.0, # the time over which we're gathering input pulse counts
+                 samplingDurationSeconds:float=config.SamplingDurationDefault, # the time over which we're gathering input pulse counts
                  detectionWindowHz:int=config.MaxDetectionHzWindowDefault # the window for "valid" and "close" detection, in Hz
                  ):
         
@@ -104,7 +108,7 @@ class Discriminator(Elaboratable):
         return math.ceil(self.detectionWindowHz * self.samplingDurationSeconds)
     
     @property 
-    def detectionWindowHalfCount(self) -> int:
+    def detectionWindowMidPoint(self) -> int:
         # midway point of the span is useful for a number of reasons,
         # notably that that is where our target frequency lies
         return (math.ceil(self.detectionWindowSpanCount/2))
@@ -124,7 +128,7 @@ class Discriminator(Elaboratable):
             The maximum "reasonable" count for this note, based on expected plus
             half the proximity detection window (adjusted for sampling time)
         '''
-        return self.detectionWindowHalfCount + self.expectedCountForNote(aNote)
+        return self.detectionWindowMidPoint + self.expectedCountForNote(aNote)
     
     
         
@@ -257,7 +261,7 @@ class Discriminator(Elaboratable):
                 # there, and anything "far away" get's shifted toward 0.  After this
                 #   0 <- far away ... higgher closer -> halfspan == target
                 # regardless of if we were above or below.
-                with m.If(subtractResult <= self.detectionWindowHalfCount):
+                with m.If(subtractResult <= self.detectionWindowMidPoint):
                     # either on or above target note, our proximity result is simply the subtractResult
                     # note we were higher (or equal)
                     m.d.sync += [
@@ -296,7 +300,7 @@ class Discriminator(Elaboratable):
                 # we'll use a simple rule for determining proximity:
                 #  - anything really close to halfspan -> "exact match"
                 #  - otherwise, not exact but any "proximity" less that halfspan/2 is "far away"
-                with m.If(readingProximityResult >=  (self.detectionWindowHalfCount - 1)):
+                with m.If(readingProximityResult >=  (self.detectionWindowMidPoint - 1)):
                     m.d.sync += [
                         self.match_exact.eq(1),
                         self.match_far.eq(0)
@@ -306,7 +310,7 @@ class Discriminator(Elaboratable):
                     # near or far but not considered an exact match, no matter what
                     m.d.sync +=  self.match_exact.eq(0)
                     
-                    with m.If(readingProximityResult <= math.ceil(self.detectionWindowHalfCount/2)):
+                    with m.If(readingProximityResult <= math.ceil(self.detectionWindowMidPoint/2)):
                         # call this far away
                         m.d.sync += self.match_far.eq(1)
                             
@@ -358,7 +362,7 @@ class Discriminator(Elaboratable):
         
 
 
-def test(usingTuning:Tuning, samplingDurationSecs:float=1.0):
+def simulate(usingTuning:Tuning, samplingDurationSecs:float=1.0):
     m = Module() # top
     m.submodules.discriminator = dut = Discriminator(usingTuning)
     
@@ -403,24 +407,73 @@ def test(usingTuning:Tuning, samplingDurationSecs:float=1.0):
 
 
 
+def coverAndProve(m:Module, discrim:Discriminator, includeCovers:bool=False):
+    # Note: I have a condition below that makes the period 0.1s -- so 
+    # during testing we only need to count a bit past 100 ticks to see results
+    rst = Signal()
+    m.d.comb += ResetSignal().eq(rst)
+    m.d.comb += [
+        Assume(~rst), # don't play with reset
+    ]
+    
+    hist = History.new(m, 50)
+    hist.track(discrim.edge_count)
+    hist.track(discrim.note)
+    
+    baseFreq = 330
+    for freq in range(baseFreq-14, baseFreq + 14):
+        with m.If( hist.wasConstant(discrim.edge_count, value=freq, startTick=0, numTicks=6) ):
+            with m.If(hist.ticks == 7):
+                m.d.comb += Assert(hist.snapshot(discrim.note, 6) == notes.Scale.E)
+                
+                if freq >= baseFreq:
+                    m.d.comb += Assert(discrim.match_high)
+                else:
+                    m.d.comb += Assert(~discrim.match_high)
+                    
+                
+                if abs(freq - baseFreq) < 2:
+                    m.d.comb += Assert(discrim.match_exact)
+                else:
+                    m.d.comb += Assert(~discrim.match_exact)
+                    
+                if abs(freq - baseFreq) < (discrim.detectionWindowHz/4):
+                    m.d.comb += Assert(~discrim.match_far)
+                else:
+                    m.d.comb += Assert(discrim.match_far)
+                    
+
+    if includeCovers:
+        with m.If(hist.wasConstant(discrim.edge_count, value=110, startTick=0, numTicks=20)):
+            m.d.comb += Cover((discrim.note == notes.Scale.A) & discrim.match_exact )
+        with m.If(hist.wasConstant(discrim.edge_count, value=199, startTick=0, numTicks=20)):
+            m.d.comb += Cover((discrim.note == notes.Scale.G))
+        
+        
+
+def ho():
+    m = Module() # top level
+    m.submodules.discriminator = dev = Discriminator(notes.StandardGuitarTuning)
+    coverAndProve(m, dev) 
+    return (m,dev,m.submodules._history)
+
 if __name__ == "__main__":
     # allow us to run this directly
     from amaranth.cli import main
     from neptune.sims.runner import runSimulator, Delay
-    Test = True
-    if (Test):
-        test(notes.StandardGuitarTuning, samplingDurationSecs=1.0)
+    doSimulate = False
+    Test = True 
+    if (doSimulate):
+        simulate(notes.StandardGuitarTuning, samplingDurationSecs=1.0)
     else:
+        if Test:
+            samplingDurationSecs=1.0 
+        else:
+            samplingDurationSecs=config.SamplingDurationDefault
         m = Module() # top level
-        m.submodules.discriminator = dev = Discriminator(notes.StandardGuitarTuning)
+        m.submodules.discriminator = dev = Discriminator(notes.StandardGuitarTuning, 
+                                                         samplingDurationSeconds=samplingDurationSecs)
+        if Test:
+            coverAndProve(m, dev, includeCovers=False) 
+            
         main(m, ports=dev.ports())
-
-    
-    
-
-
-
-
-    
-        
-        

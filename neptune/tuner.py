@@ -23,13 +23,14 @@ coherently functioning system.
 
 import math
 from amaranth import Signal, Elaboratable, Module, Cat
-from amaranth import ClockDomain, ClockSignal
+from amaranth import ClockDomain, ClockSignal, ResetSignal
 
 from amaranth.build import Platform
 from amaranth.build import Pins, Resource, Subsignal, Attrs
 
 
 from amaranth.sim import Delay
+from amaranth.asserts import Assert, Assume, Cover
 
 from neptune.discriminator import Discriminator
 from neptune.display.display import DualSevenSegmentDisplay
@@ -40,6 +41,9 @@ from neptune.in_clock import ClockOptions, ClockName
 
 from neptune.sims.runner import runSimulator
 from neptune.neptune_config import DevPlatform
+import neptune.neptune_config as config
+from neptune.testing.history import History
+from neptune.display.sprites import NoteSprites
 
 
 
@@ -56,7 +60,7 @@ class Neptune(Elaboratable):
     def __init__(self,  
                  usingTuning:Tuning=StandardGuitarTuning,
                  samplingDurationSeconds:float = 1.0,
-                 inputSynchronizerNumStages:int = 2):
+                 inputSynchronizerNumStages:int = config.NumInputSynchronizerStagesDefault):
         
         
         self.tuning = usingTuning
@@ -74,6 +78,7 @@ class Neptune(Elaboratable):
         
     def ports(self):
         return [self.input_pulses, self.displaySegments, self.displaySelect]
+    
     
 
     def elaborate(self, platform:Platform):
@@ -184,12 +189,89 @@ class Neptune(Elaboratable):
                 self.clock_config.eq(Cat(devinputs.clkconf0, devinputs.clkconf1))
                 
             ]
+
+
+
+def inputSequenceForSignal(tuner:Neptune, freqHz:float):
+    
+    numPulses = (tuner.samplingDurationSeconds * freqHz) + 1
+    
+    numTicks = math.ceil(1000 * tuner.samplingDurationSeconds)
+    
+    tickPeriod = numTicks/numPulses 
+    tickHalfCycle = round(tickPeriod/2.0)
+    
+    seq = []
+    tickCount = 0
+    for _i in range(numTicks):
+        if tickCount <= tickHalfCycle:
+            seq.append(1)
+        else:
+            seq.append(0)
         
-        
+        tickCount += 1
+        if tickCount >= tickPeriod:
+            tickCount = 0
+    
+    return seq
+            
+    
+
+
+def coverAndProve(m:Module, tuner:Neptune, includeCovers:bool=False):
+    # Note: I have a condition below that makes the period 0.1s -- so 
+    # during testing we only need to count a bit past 100 ticks to see results
+    import neptune.display.sprites as sprites
+    import neptune.notes as notes
+    rst = Signal()
+    m.d.comb += ResetSignal().eq(rst)
+    m.d.comb += [
+        Assume(~rst), # don't play with reset
+        Assume(tuner.clock_config == 0) # 1 khz clock
+    ]
+    
+    
+    numTicksUntilMeasured = math.ceil(1000 * tuner.samplingDurationSeconds) + 25 # approx
+    
+    hist = History.new(m, numTicksUntilMeasured)
+    hist.track(tuner.input_pulses)
+    hist.track(tuner.displaySegments)
+    hist.track(tuner.displaySelect)
+    
+    notesSegs = sprites.NoteSprites()
+    
+    inputSequence = inputSequenceForSignal(tuner, 330)
+    
+    numberOfPostSampleTicksForNoteDisplay = 23
+    # giving followedSequence the entire list in one go kills it: max recursion.
+    # but break it up a bit, like so, and huzza
+    with m.If(hist.followedSequence(tuner.input_pulses, inputSequence[:100], startTick=0)):
+        with m.If(hist.followedSequence(tuner.input_pulses, inputSequence[100:200], startTick=100)):
+            with m.If(hist.followedSequence(tuner.input_pulses, inputSequence[200:], startTick=200)):
+                with m.If(hist.ticks > len(inputSequence) + 25):
+                    m.d.comb += Assert(hist.snapshot(tuner.displaySegments, len(inputSequence)+numberOfPostSampleTicksForNoteDisplay) == notesSegs[notes.Scale.E].bits)
+
+
+    inputSequence = inputSequenceForSignal(tuner, 112)
+    
+    # giving followedSequence the entire list in one go kills it: max recursion.
+    # but break it up a bit, like so, and huzza
+    with m.If(hist.followedSequence(tuner.input_pulses, inputSequence[:100], startTick=0)):
+        with m.If(hist.followedSequence(tuner.input_pulses, inputSequence[100:200], startTick=100)):
+            with m.If(hist.followedSequence(tuner.input_pulses, inputSequence[200:], startTick=200)):
+                with m.If(hist.ticks > len(inputSequence) + 25):
+                    m.d.comb += Assert(hist.snapshot(tuner.displaySegments, len(inputSequence)+numberOfPostSampleTicksForNoteDisplay) == notesSegs[notes.Scale.A].bits)
+
+
+                    
+    if includeCovers:
+        with m.If(hist.ticks > 50):
+            m.d.comb += Cover(tuner.displaySegments == notesSegs[notes.Scale.G].bits)
+
 
 
   
-def test():
+def simulate():
     m = Module() # top
     m.submodules.tuner = dut = Neptune(usingTuning=StandardGuitarTuning, samplingDurationSeconds=0.5)
     
@@ -258,17 +340,27 @@ if __name__ == "__main__":
     
     doBuild = True
     doBurnAfterBuild = False
-    Test = False
+    
+    doSimulate = False
+    Test = True
     
     if doBuild:
         build(doBurnAfterBuild)
         
-    if Test:
-        test()
+    if doSimulate:
+        simulate()
     else:
+        if Test:
+            samplingDurationSecs=0.25 
+        else:
+            samplingDurationSecs=config.SamplingDurationDefault
         m = Module() # top level
-        m.submodules.edgedetect = dev = Neptune(usingTuning=StandardGuitarTuning, 
-                                                    samplingDurationSeconds=0.5)
+        m.submodules.tuner = dev = Neptune(usingTuning=StandardGuitarTuning, 
+                                                    samplingDurationSeconds=samplingDurationSecs)
+        
+        if Test:
+            coverAndProve(m, dev, includeCovers=True)
+            
         mainCLI(m, dev)
         
 

@@ -19,12 +19,16 @@ Created on Apr 12, 2023
 '''
 
 
-from amaranth import Signal, Elaboratable, Module
+from amaranth import Signal, Elaboratable, Module, ResetSignal
 from amaranth.build import Platform
 
 from amaranth.lib.cdc import FFSynchronizer
 
 from amaranth.sim import Delay
+from amaranth.asserts import Assert, Assume, Cover
+
+import neptune.neptune_config as config
+from neptune.testing.history import History
 from neptune.sims.runner import runSimulator
 
 
@@ -37,7 +41,7 @@ class EdgeDetect(Elaboratable):
                 it is unlikely to be required.
     '''
     
-    def __init__(self, numStages:int = 2):
+    def __init__(self, numStages:int = config.NumInputSynchronizerStagesDefault):
         # just one input and one output
         self.input = Signal()
         self.output = Signal()
@@ -47,6 +51,14 @@ class EdgeDetect(Elaboratable):
     
     def ports(self):
         return [self.input, self.output]
+    
+    @property 
+    def numStages(self):
+        return self._numStages
+    
+    @property 
+    def signalDelayClocks(self):
+        return self.numStages + 1
     
     def elaborate(self, platform:Platform):
         m = Module()
@@ -60,7 +72,7 @@ class EdgeDetect(Elaboratable):
         # the synchronizer itself
         # add it to the submodules being used
         m.submodules.ffsync  = FFSynchronizer(i=self.input, o=syncOut, 
-                                                      stages=self._numStages) 
+                                                      stages=self.numStages) 
         
         
         # by default, out output is low
@@ -87,9 +99,7 @@ class EdgeDetect(Elaboratable):
         return m
     
     
-def test():
-    m = Module() # top
-    m.submodules.edgedetect = dut = EdgeDetect()
+def simulate(m:Module, dut:EdgeDetect):
     
     def clockInput(times:int, frequencyHz:int):
         periodTime = 1/frequencyHz
@@ -108,16 +118,56 @@ def test():
     runSimulator(m, 'edge_detect', [dut.input, dut.output], [twoClocks], clockFreq=4e3)
 
 
+def coverAndProve(m:Module, edgedetect:EdgeDetect, includeCovers:bool=False):
+
+    rst = Signal()
+    m.d.comb += ResetSignal().eq(rst)
+    #sync = ClockDomain('sync')
+    #m.domains += sync
+    m.d.comb += Assume(~rst)
+    
+    hist = History.new(m, 50)
+    
+    hist.track(edgedetect.input)
+    hist.track(edgedetect.output)
+    
+    with m.If( (hist.ticks > 5) & 
+               ~(hist.snapshot(edgedetect.input, 0)) & 
+               hist.snapshot(edgedetect.input, 1)):
+        m.d.comb += Assert(hist.snapshot(edgedetect.output, 4))
+        
+        
+    if includeCovers:
+        # find a way to have output high
+        m.d.comb += Cover((hist.ticks > 8) & hist.snapshot(edgedetect.output, 6))
+        
+        # check what a long input pulse spits out
+        m.d.comb += Cover( hist.snapshot(edgedetect.input, 4) & 
+                           hist.snapshot(edgedetect.input, 5 ) & 
+                           hist.snapshot(edgedetect.input, 6 ) &
+                           (hist.ticks > 8) )
+
+ 
+
 if __name__ == "__main__":
     # allow us to run this directly
     from amaranth.cli import main
+    
+    
+    m = Module() # top
+    m.submodules.edgedetect = dev = EdgeDetect()
+    
+    
+    Sim = False
     Test = True
-    if (Test):
-        test()
+    if (Sim):
+        simulate(m, dev)
+    
     else:
-        m = Module() # top level
-        m.submodules.edgedetect = dev = EdgeDetect()
-        main(m, ports=dev.ports())
+        if Test:
+            coverAndProve(m, dev)
+    
+    main(m, ports=dev.ports())
 
 
 
