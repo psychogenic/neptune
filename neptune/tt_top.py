@@ -112,7 +112,7 @@ class TinyTapeoutTop(Elaboratable):
 
         # Output -- all display related
         outputs = Cat(
-            tuner.displaySegments[:7],
+            tuner.displaySegments[1:],
             tuner.displaySelect
             
         )
