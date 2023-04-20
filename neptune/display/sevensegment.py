@@ -53,14 +53,15 @@ class SevenSegment(Elaboratable):
         
         segMap = self.sprites.toArray()
         
-        # if the value is valid, spit the associated bitfield out 
-        # on segments
+        # by default, blank the segments
+        m.d.sync += self.segments.eq(0)
+            
+        
+        # but if the value is valid, spit the associated bitfield out 
+        # on segments        
         with m.If(self.value < len(self.sprites)):
             m.d.sync += self.segments.eq(segMap[self.value])
-        with m.Else():
-            # otherwise, blank it.
-            m.d.sync += self.segments.eq(0)
-             
+
         return m
     
         

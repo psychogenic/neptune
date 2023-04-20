@@ -64,8 +64,11 @@ class DualSevenSegmentDisplay(Elaboratable):
             proxdisplay.value.eq(self.valueProxim)
         ]
             
+        
+        m.d.sync += self.proximitySelect.eq(1)
             
         with m.If(self.proximitySelect):
+            m.d.sync += self.proximitySelect.eq(0) # flip it
             with m.If(self.valueNote == notes.Scale.NA):
                 m.d.sync += self.segments.eq(notedisplay.segments)
             with m.Else():
@@ -74,8 +77,7 @@ class DualSevenSegmentDisplay(Elaboratable):
         with m.Else():
             m.d.sync += self.segments.eq(notedisplay.segments)
             
-        m.d.sync += self.proximitySelect.eq(~self.proximitySelect)
-        
+
         return m
     
     

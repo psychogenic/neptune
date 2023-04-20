@@ -33,12 +33,13 @@ from neptune.testing.history import History
 # FSM states
 @unique
 class DiscriminatorState(Enum):
-    Init                    = 0
-    CalculateDiffFromTarget = 1
-    Compare                 = 2
-    MovedToNextCheckBounds  = 3
-    DetectedValidNote       = 4
-    DisplayResult           = 5
+    PowerUp                 = 0 
+    Init                    = 1
+    CalculateDiffFromTarget = 2
+    Compare                 = 3
+    MovedToNextCheckBounds  = 4
+    DetectedValidNote       = 5
+    DisplayResult           = 6
     
     
 
@@ -162,7 +163,7 @@ class Discriminator(Elaboratable):
         inputFreqHigher = Signal()
         
         curNoteIndex = Signal(range(len(self.tuning)))
-        m.d.sync += curState.eq(DiscriminatorState.Init)
+        m.d.sync += curState.eq(DiscriminatorState.PowerUp)
         
         # these two arrays get used within the actual verilog, so they are Array objects
         
@@ -179,6 +180,12 @@ class Discriminator(Elaboratable):
         
         # the actual FSM dispatcher
         with m.Switch(curState):
+            with m.Case(DiscriminatorState.PowerUp):
+                m.d.sync += [
+                     noMatchCount.eq(0),
+                     curState.eq(DiscriminatorState.Init)
+                ]
+                
             
             # init state
             with m.Case(DiscriminatorState.Init):
@@ -331,8 +338,8 @@ class Discriminator(Elaboratable):
             
             with m.Default():
                 # catch any weird start-up state, and shunt it 
-                # to init
-                m.d.sync += curState.eq(DiscriminatorState.Init)
+                # to reset
+                m.d.sync += curState.eq(DiscriminatorState.PowerUp)
         
 
         

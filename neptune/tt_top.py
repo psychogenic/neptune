@@ -65,12 +65,10 @@ class TinyTapeoutTop(Elaboratable):
         self.pins = PinLocations()
         
         self.input_pulses = Signal()
-        self.clock = Signal()
-        self.reset = Signal()
         
         
     def ports(self):
-        return [self.io_in, self.io_out, self.input_pulses, self.clock]
+        return [self.io_in, self.io_out, self.input_pulses]
     
     
     def inputPin(self, idx):
@@ -102,8 +100,6 @@ class TinyTapeoutTop(Elaboratable):
         m.d.comb += [
             
             self.input_pulses.eq(self.pin_input_pulses),
-            self.clock.eq(self.pin_clock),
-            self.reset.eq(self.pin_reset),
             ClockSignal("sync").eq(self.pin_clock),
             ResetSignal("sync").eq(self.pin_reset),
         ]
@@ -193,7 +189,7 @@ if __name__ == "__main__":
     from amaranth.cli import main
     from amaranth.back import verilog
     import os
-    top_name = os.environ.get("TOP", "neptune")
+    top_name = os.environ.get("TOP", "psychogenic_neptunefixed")
 
     Test = False 
     if Test:

@@ -349,10 +349,10 @@ if __name__ == "__main__":
     # allow us to run this directly
     from amaranth.cli import main
     
-    doBuild = True
+    doBuild = False
     doBurnAfterBuild = False
     
-    doSimulate = False
+    doSimulate = True
     Test = False
     
     if doBuild:
