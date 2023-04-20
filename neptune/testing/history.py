@@ -4,9 +4,20 @@ Created on Apr 18, 2023
 @author: Pat Deegan
 @copyright: Copyright (C) 2023 Pat Deegan, https://psychogenic.com
 '''
-from amaranth import Elaboratable, Signal, Module
+from amaranth import Elaboratable, Signal, Module, Array
 from amaranth.build import Platform
 
+class RecentPast:
+    def __init__(self, s:Signal, maxHistory:int=50):
+        self.rose = Signal()
+        self.fell = Signal()
+        self.rose_trace = Signal(maxHistory)
+        self.fell_trace = Signal(maxHistory)
+        nsuf = s.name
+        self.rose.name = f'rose_{nsuf}'
+        self.fell.name = f'fell_{nsuf}'
+        self.rose_trace.name = f'rosetrace_{nsuf}'
+        self.fell_trace.name = f'felltrace_{nsuf}'
 
 class History(Elaboratable):
     '''
@@ -47,11 +58,13 @@ class History(Elaboratable):
         return hist 
     
     def __init__(self, maxHistory:int=50):
-        self.registers = []
-        self.history = []
+        self.registers = Array()
+        self.history = Array()
+        self.recentPast = Array()
         self.regmap = dict()
         self.maxHistory = maxHistory
         self.ticks = Signal(range(self.maxHistory))
+        self.usingRecentPast = False
         
     def track(self, s:Signal):
         '''
@@ -64,16 +77,35 @@ class History(Elaboratable):
         self.registers.append(s)
         self.regmap[s.name] = regIdx
         
+        self.recentPast.append(RecentPast(s, self.maxHistory))
+
+
         
     def snapshot(self, s:Signal, tickIdx:int):
         '''
             snapshot -- get the value of the signal at tick tickIdx
         '''
-        #ssize = self.sizeFor(s)
-        if False: # thought I might have to flip this, doesn't seem so
-            return self.history[self.regmap[s.name]][self.sliceEnd(s, tickIdx):self.sliceStart(s, tickIdx):-1]
-        else:
-            return self.history[self.regmap[s.name]][self.sliceStart(s, tickIdx):self.sliceEnd(s, tickIdx)]
+        return self.history[self.regmap[s.name]][self.sliceStart(s, tickIdx):self.sliceEnd(s, tickIdx)]
+        
+    def rose(self, s:Signal):
+        '''
+            rose -- if the signal of interest just went from low to high
+        '''
+        self.usingRecentPast = True
+        return self.recentPast[self.regmap[s.name]].rose
+    def fell(self, s:Signal):
+        '''
+            fell - if the signal of interest just went from high to low
+        '''
+        self.usingRecentPast = True
+        return self.recentPast[self.regmap[s.name]].fell
+        
+    def ago(self, numTicksBack:int):
+        return self.ticks - numTicksBack
+    
+    @property
+    def now(self):
+        return self.ticks
     
     def sequence(self, s:Signal, startTick:int, numTicks:int):
         '''
@@ -91,7 +123,7 @@ class History(Elaboratable):
         vList = [value] * numTicks
         return self.followedSequence(s, vList, startTick, numTicks)
     
-    def followedSequence(self, s:Signal, values:list, startTick:int, numTicks:int=None):
+    def followedSequence(self, s:Signal, values:list, startTick:int=0, numTicks:int=None):
         '''
             followedSequence
             Similar to above, but rather than being constant, the value is expected 
@@ -131,6 +163,31 @@ class History(Elaboratable):
                     s = self.registers[r]
                     m.d.sync += self.history[r][
                             self.sliceStart(s, t):self.sliceEnd(s, t)].eq(self.registers[r])
+                            
+                    if self.usingRecentPast and t:
+                        prevStep = t - 1
+                        with m.If(s):
+                            # high 
+                            m.d.sync += self.recentPast[r].fell.eq(0)
+                            with m.If(~ self.snapshot(s, prevStep)):
+                                # and was low: rose
+                                m.d.sync += self.recentPast[r].rose_trace[t].eq(1)
+                                m.d.sync += self.recentPast[r].rose.eq(1)
+                            with m.Else():
+                                m.d.sync += self.recentPast[r].rose.eq(0)
+                                
+                                
+                        with m.Else():
+                            # low 
+                            m.d.sync += self.recentPast[r].rose.eq(0)
+                            with m.If(self.snapshot(s, prevStep)):
+                                # and was high: fell
+                                m.d.sync += self.recentPast[r].fell_trace[t].eq(1)
+                                m.d.sync += self.recentPast[r].fell.eq(1)
+                            with m.Else():
+                                m.d.sync += self.recentPast[r].fell.eq(0)
+                                
+                            
                     
         
         return m

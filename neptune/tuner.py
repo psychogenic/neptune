@@ -242,6 +242,17 @@ def coverAndProve(m:Module, tuner:Neptune, includeCovers:bool=False):
     
     inputSequence = inputSequenceForSignal(tuner, 330)
     
+    
+    if False:
+        # just some testing for history rose/fell, TODO:REMOVE
+        with m.If(hist.followedSequence(tuner.input_pulses, [0, 0, 0, 1, 0, 1, 1, 1, 0, 1,0])):
+            with m.If(hist.ticks > 10):
+                with m.If(hist.rose(tuner.input_pulses)):
+                    m.d.comb += Assert(tuner.displaySegments == 22)
+                with m.Elif(hist.fell(tuner.input_pulses)):
+                    m.d.comb += Assert(tuner.displaySegments == 33)
+                
+    
     numberOfPostSampleTicksForNoteDisplay = 23
     # giving followedSequence the entire list in one go kills it: max recursion.
     # but break it up a bit, like so, and huzza
