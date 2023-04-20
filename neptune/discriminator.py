@@ -56,19 +56,20 @@ class Discriminator(Elaboratable):
     
     def __init__(self, usingTuning:Tuning, # the set of notes we care about
                  samplingDurationSeconds:float=config.SamplingDurationDefault, # the time over which we're gathering input pulse counts
-                 detectionWindowHz:int=config.MaxDetectionHzWindowDefault # the window for "valid" and "close" detection, in Hz
+                 detectionWindowMaxHz:int=config.MaxDetectionHzWindowDefault # the window for "valid" and "close" detection, in Hz
                  ):
         
         self.tuning = usingTuning
         
         self.samplingDurationSeconds = samplingDurationSeconds
-        self.detectionWindowHz = detectionWindowHz
+        self.detectionWindowMaxHz = detectionWindowMaxHz
+        self.detectionWindowShiftBits = 3
         
         # we need to count up at least to whatever the max reportable 
         # frequency is, plus some room above for our detection window
         
         maxFreqHz = self.tuning.highest.frequency
-        countJitterHeadroomHz = detectionWindowHz # we only use half this window, but whatever, won't die from extra bits
+        countJitterHeadroomHz = detectionWindowMaxHz # we only use half this window, but whatever, won't die from extra bits
         
         # everything is specified in Hz however.  If, e.g., we are only sampling 
         # for half a second, then all these values get scaled by half as well,
@@ -103,16 +104,22 @@ class Discriminator(Elaboratable):
     
     
     @property 
-    def detectionWindowSpanCount(self) -> int:
+    def detectionWindowSpanCountMax(self) -> int:
         # detectionWindowHz must be adjusted to account for the 
         # desired sampling duration
-        return math.ceil(self.detectionWindowHz * self.samplingDurationSeconds)
+        return math.ceil(self.detectionWindowMaxHz * self.samplingDurationSeconds)
     
-    @property 
-    def detectionWindowMidPoint(self) -> int:
+    
+    def detectionWindowSpanCount(self, forNote:DetectedNote) -> int:
+        expectedCount = self.expectedCountForNote(forNote)
+        print(f"Expected is {expectedCount} so span is {expectedCount >> 3}")
+        return expectedCount >> self.detectionWindowShiftBits
+        
+        
+    def detectionWindowMidPoint(self, forNote:DetectedNote) -> int:
         # midway point of the span is useful for a number of reasons,
         # notably that that is where our target frequency lies
-        return (math.ceil(self.detectionWindowSpanCount/2))
+        return self.detectionWindowSpanCount(forNote) >> 1
     
     
 
@@ -129,7 +136,7 @@ class Discriminator(Elaboratable):
             The maximum "reasonable" count for this note, based on expected plus
             half the proximity detection window (adjusted for sampling time)
         '''
-        return self.detectionWindowMidPoint + self.expectedCountForNote(aNote)
+        return self.detectionWindowMidPoint(aNote) + self.expectedCountForNote(aNote)
     
     
         
@@ -138,12 +145,17 @@ class Discriminator(Elaboratable):
         self.elaborateStateMachine(m, platform)
         return m
         
-    
+    def DEADBEEFadjustDetectionWindow(self, detectionWindowSignal:Signal, forNote:DetectedNote):
+        return detectionWindowSignal.eq(forNote.frequency >> self.detectionWindowShiftBits)
     
     def elaborateStateMachine(self, m:Module, platform:Platform):
         
         
         curState = Signal(DiscriminatorState) # FSM current state
+        
+        detectWindowBits = math.ceil(math.log2(self.detectionWindowSpanCount(self.tuning.highest))) + 1
+        detectionWindow = Signal(unsigned(detectWindowBits))
+        detectionWindowMidPoint = Signal(unsigned(detectWindowBits))
         
         maxNoMatchesBeforeErase = 31
         noMatchCount = Signal(range(maxNoMatchesBeforeErase+1))
@@ -151,14 +163,14 @@ class Discriminator(Elaboratable):
         # during search, we will subtract each target count from actual edge count 
         # the distance may be very large, so the result must have as many bits as the
         # input edge count itself, to ensure we don't wrap
-        subtractResult = Signal(unsigned(self.input_bits))
+        subtractResult = Signal(unsigned(self.input_bits + 1))
         
         # in cases where the subtraction above is "close enough" -- ie within our
         # detection window span, further processing will occur
         # this smaller value is guaranteed to have a max value equal to the 
         # detection window itself, hence we create a signal with less bits for this
         # distance result
-        readingProximityResult = Signal(range(self.detectionWindowSpanCount + 1 ))
+        readingProximityResult = Signal(unsigned(detectWindowBits))
         
         inputFreqHigher = Signal()
         
@@ -168,6 +180,12 @@ class Discriminator(Elaboratable):
         # these two arrays get used within the actual verilog, so they are Array objects
         
         # the tests we'll be doing, highest frequency first
+        NoteWindowSize = Array(
+                list(map(lambda n: Const(self.detectionWindowSpanCount(n), unsigned(len(detectionWindow))), 
+                         self.tuning.descending))
+            
+            )
+        
         TestsDescending = Array(
             list(map(lambda n: Const(self.maxCountForNote(n), unsigned(self.input_bits)), 
                      self.tuning.descending)))
@@ -177,6 +195,7 @@ class Discriminator(Elaboratable):
             list(map(lambda x: x.note, self.tuning.descending))
             )
         
+        print(TestsDescending)
         
         # the actual FSM dispatcher
         with m.Switch(curState):
@@ -203,6 +222,8 @@ class Discriminator(Elaboratable):
                 # and move on
                 m.d.sync += [
                     subtractResult.eq(TestsDescending[curNoteIndex] - self.edge_count),
+                    detectionWindow.eq(NoteWindowSize[curNoteIndex]), # adjust the window for this note
+                    detectionWindowMidPoint.eq(NoteWindowSize[curNoteIndex] >> 1),
                     curState.eq(DiscriminatorState.Compare)
                 ]
                 
@@ -210,7 +231,7 @@ class Discriminator(Elaboratable):
                 
             with m.Case(DiscriminatorState.Compare):
                 # check if difference is smaller than our threshold window
-                with m.If(subtractResult <= self.detectionWindowSpanCount):
+                with m.If(subtractResult <= detectionWindow):
                     # if it is, we're close enough to call this a valid note
                     m.d.sync += [ 
                         self.note.eq(NotesSortedByTestIdx[curNoteIndex]), # set output note to Scale.XXX
@@ -268,7 +289,7 @@ class Discriminator(Elaboratable):
                 # there, and anything "far away" get's shifted toward 0.  After this
                 #   0 <- far away ... higgher closer -> halfspan == target
                 # regardless of if we were above or below.
-                with m.If(subtractResult <= self.detectionWindowMidPoint):
+                with m.If(subtractResult <= detectionWindowMidPoint):
                     # either on or above target note, our proximity result is simply the subtractResult
                     # note we were higher (or equal)
                     m.d.sync += [
@@ -279,7 +300,7 @@ class Discriminator(Elaboratable):
                     # we are below target note, so we do that flip using a subtraction
                     # note we were lower
                     m.d.sync += [
-                        readingProximityResult.eq(self.detectionWindowSpanCount - subtractResult),
+                        readingProximityResult.eq(detectionWindow - subtractResult),
                         inputFreqHigher.eq(0)
                     ]
                 
@@ -307,7 +328,7 @@ class Discriminator(Elaboratable):
                 # we'll use a simple rule for determining proximity:
                 #  - anything really close to halfspan -> "exact match"
                 #  - otherwise, not exact but any "proximity" less that halfspan/2 is "far away"
-                with m.If(readingProximityResult >=  (self.detectionWindowMidPoint - 1)):
+                with m.If(readingProximityResult >=  (detectionWindowMidPoint - 1)):
                     m.d.sync += [
                         self.match_exact.eq(1),
                         self.match_far.eq(0)
@@ -317,7 +338,7 @@ class Discriminator(Elaboratable):
                     # near or far but not considered an exact match, no matter what
                     m.d.sync +=  self.match_exact.eq(0)
                     
-                    with m.If(readingProximityResult <= math.ceil(self.detectionWindowMidPoint/2)):
+                    with m.If(readingProximityResult <= (detectionWindowMidPoint >> 1)):
                         # call this far away
                         m.d.sync += self.match_far.eq(1)
                             
@@ -342,36 +363,10 @@ class Discriminator(Elaboratable):
                 m.d.sync += curState.eq(DiscriminatorState.PowerUp)
         
 
-        
-        
-        
-    def elaborateParallel(self, m:Module, platform:Platform):
-        
-        m.d.sync += self.note.eq(notes.Scale.NA) 
-        
-        distanceValue = Signal(range(self.detectionWindowHz + 1))
-        
-        for aNote in self.tuning.descending:
-            
-            compareCount = Const(self.maxCountForNote(aNote))
-            
-            subtractResult = Signal(self.input_bits)
-            
-            m.d.comb += subtractResult.eq(compareCount - self.edge_count)
-            with m.If(subtractResult <= self.detectionWindowHz):
-                m.d.sync += self.note.eq(aNote.note)
-                m.d.comb += distanceValue.eq(subtractResult)
-                
-        
-        # at this stage self.note has NA or a note within window
-        # and distanceValue has the last delta value
-        
-        
-
 
 def simulate(usingTuning:Tuning, samplingDurationSecs:float=1.0):
     m = Module() # top
-    m.submodules.discriminator = dut = Discriminator(usingTuning)
+    m.submodules.discriminator = dut = Discriminator(usingTuning, samplingDurationSeconds=samplingDurationSecs)
     
     
     def setEdgeCountToFrequency(f:float, deltaVal:int = 0):
@@ -395,22 +390,29 @@ def simulate(usingTuning:Tuning, samplingDurationSecs:float=1.0):
         yield from tunerTestWithDelta(-7) # far + low 
         
         
-    def tunerTestRange():
-        baseFreq = 305
-        for i in range(0,68,3):
+        
+    def tunerTestRange(baseFreq):
+        for i in range(0,28,1):
             yield from setEdgeCountToFrequency(baseFreq + i)
             yield Delay(40e-3)
             
-        for i in range(0,75,3):
-            yield from setEdgeCountToFrequency((baseFreq + 50) - i)
-            yield Delay(40e-3)
+        yield from setEdgeCountToFrequency(0)
+        yield Delay(1)
         
-    
+    def tunerTestAllRanges():
+        baseDelta = 14
+        yield from tunerTestRange(83 - baseDelta)
+        yield from tunerTestRange(110 - baseDelta)
+        yield from tunerTestRange(147 - baseDelta)
+        yield from tunerTestRange(196 - baseDelta)
+        yield from tunerTestRange(246 - baseDelta)
+        yield from tunerTestRange(330 - baseDelta)
+            
             
         
     runSimulator(m, 'discriminator', 
                  [dut.edge_count, dut.note, dut.match_exact, dut.match_far, dut.match_high], 
-                 [tunerTest], clockFreq=1e3)
+                 [tunerTestAllRanges], clockFreq=4e3)
 
 
 
@@ -468,8 +470,8 @@ if __name__ == "__main__":
     # allow us to run this directly
     from amaranth.cli import main
     from neptune.sims.runner import runSimulator, Delay
-    doSimulate = False
-    Test = True 
+    doSimulate = True
+    Test = False 
     if (doSimulate):
         simulate(notes.StandardGuitarTuning, samplingDurationSecs=1.0)
     else:
