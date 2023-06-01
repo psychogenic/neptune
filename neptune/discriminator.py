@@ -112,14 +112,20 @@ class Discriminator(Elaboratable):
     
     def detectionWindowSpanCount(self, forNote:DetectedNote) -> int:
         expectedCount = self.expectedCountForNote(forNote)
-        print(f"Expected is {expectedCount} so span is {expectedCount >> 3}")
-        return expectedCount >> self.detectionWindowShiftBits
+        windowSpan = expectedCount >> self.detectionWindowShiftBits
+        #print(f"Expected for {forNote} is {expectedCount} so span is {windowSpan}")
+        if windowSpan < 3:
+            windowSpan = 3
+            #print("Too small, bumping to 3")
+        return windowSpan
         
         
     def detectionWindowMidPoint(self, forNote:DetectedNote) -> int:
         # midway point of the span is useful for a number of reasons,
         # notably that that is where our target frequency lies
-        return self.detectionWindowSpanCount(forNote) >> 1
+        mp = self.detectionWindowSpanCount(forNote) >> 1
+        # print(f'Mid point for {forNote} is {mp}')
+        return mp
     
     
 
@@ -195,7 +201,7 @@ class Discriminator(Elaboratable):
             list(map(lambda x: x.note, self.tuning.descending))
             )
         
-        print(TestsDescending)
+        # print(TestsDescending)
         
         # the actual FSM dispatcher
         with m.Switch(curState):
@@ -328,7 +334,8 @@ class Discriminator(Elaboratable):
                 # we'll use a simple rule for determining proximity:
                 #  - anything really close to halfspan -> "exact match"
                 #  - otherwise, not exact but any "proximity" less that halfspan/2 is "far away"
-                with m.If(readingProximityResult >=  (detectionWindowMidPoint - 1)):
+                #with m.If(readingProximityResult >=  (detectionWindowMidPoint - 1)):
+                with m.If(readingProximityResult >=  (detectionWindowMidPoint - (detectionWindow >> 4)) ):
                     m.d.sync += [
                         self.match_exact.eq(1),
                         self.match_far.eq(0)

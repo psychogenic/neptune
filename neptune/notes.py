@@ -131,8 +131,12 @@ StandardGuitarTuning = Tuning([
         DetectedNote('E2', Scale.E, 82.41),
         DetectedNote('A2', Scale.A, 110.0),
         DetectedNote('D3', Scale.D, 146.83),
+        DetectedNote('E3', Scale.E, 82.41*2), # fat string 12th fret
         DetectedNote('G3', Scale.G, 196.00),
+        DetectedNote('A3', Scale.A, 110.0*2), # A string 12th fret
+        DetectedNote('G4', Scale.G, 196.00*2),
         DetectedNote('B3', Scale.B, 246.94),
+        DetectedNote('D4', Scale.D, 146.83*2), # D string, 12th fret
         DetectedNote('E4', Scale.E, 329.63)
     ])
 

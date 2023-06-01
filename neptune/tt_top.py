@@ -38,9 +38,6 @@ from neptune.testing.history import History
 
 class PinLocations:
     def __init__(self):
-        
-        self.clk = 0
-        self.rst = 1
         self.clkconfig_0 = 2
         self.clkconfig_1 = 3
         self.input_pulses = 4
@@ -54,9 +51,24 @@ class TinyTapeoutTop(Elaboratable):
         self.samplingDurationSeconds = samplingDurationSeconds
         self.inputSynchronizerNumStages = inputSynchronizerNumStages
         
-        # TT has 8 in, 8 out
-        self.io_in = Signal(8)
-        self.io_out = Signal(8)
+        # TT has 8 in, 8 out, and a bunch of new stuff
+        self.ui_in = Signal(8) # dedicated in
+        self.uo_out = Signal(8) # dedicated out
+        self.uio_in = Signal(8) # bidir, in
+        self.uio_out = Signal(8) # bidir, out
+        self.uio_oe = Signal(8) # bidir, IOs: Enable path (active high: 0=input, 1=output)
+        self.ena = Signal()
+        self.clk = Signal()
+        self.rst_n = Signal()
+        
+        
+        
+        
+        
+        
+        
+        
+        
         
         # making it public for use in testing
         self.tuner =  Neptune(usingTuning=self.tuning, samplingDurationSeconds=self.samplingDurationSeconds, 
@@ -66,22 +78,37 @@ class TinyTapeoutTop(Elaboratable):
         
         self.input_pulses = Signal()
         
+    def tt_top_public_ports(self):
+        return [
+            
+            
+            self.ui_in,
+            self.uo_out,
+            self.uio_in,
+            self.uio_out,
+            self.uio_oe,
+            self.ena,
+            self.clk,
+            self.rst_n
+        
+        
+        ]
         
     def ports(self):
-        return [self.io_in, self.io_out, self.input_pulses]
+        return [self.ui_in, self.uo_out, self.input_pulses, self.clk, self.rst_n]
     
     
     def inputPin(self, idx):
-        return self.io_in[idx]
+        return self.ui_in[idx]
     
     
     @property 
     def pin_clock(self):
-        return self.inputPin(self.pins.clk)
+        return self.clk
 
     @property 
     def pin_reset(self):
-        return self.inputPin(self.pins.rst)
+        return self.rst_n
     
     @property 
     def pin_input_pulses(self):
@@ -99,14 +126,20 @@ class TinyTapeoutTop(Elaboratable):
         # clock and reset
         m.d.comb += [
             
-            self.input_pulses.eq(self.pin_input_pulses),
             ClockSignal("sync").eq(self.pin_clock),
-            ResetSignal("sync").eq(self.pin_reset),
+            ResetSignal("sync").eq(~self.pin_reset),
         ]
+        # direct mappings
+        m.d.comb += [
+            self.uio_oe.eq(0xff), # bidir are all outputs
+            self.input_pulses.eq(self.pin_input_pulses),
+            self.uio_out.eq(tuner.pulseCount)
+        ]
+
         
         # inputs
         m.d.comb += [
-            tuner.clock_config.eq(Cat(self.io_in[self.pins.clkconfig_0], self.io_in[self.pins.clkconfig_1])),
+            tuner.clock_config.eq(Cat(self.ui_in[self.pins.clkconfig_0], self.ui_in[self.pins.clkconfig_1])),
             tuner.input_pulses.eq(self.input_pulses)    
         ]
 
@@ -117,7 +150,7 @@ class TinyTapeoutTop(Elaboratable):
             
         )
         
-        output_pins = self.io_out
+        output_pins = self.uo_out
         assert outputs.shape() == output_pins.shape(), "inconsistent output shape"
 
         m.d.comb += output_pins.eq(outputs)
@@ -136,11 +169,11 @@ def coverAndProve(m:Module, tttop:TinyTapeoutTop, includeCovers:bool=False):
     tuner = tttop.tuner
     
     rst = tttop.pin_reset
-    m.d.comb += ResetSignal().eq(rst)
+    m.d.comb += ResetSignal().eq(~rst)
     m.d.comb += [
-        Assume(~rst), # don't play with reset
-        Assume(tttop.io_in[tttop.pins.clkconfig_0] == 0), # 1 khz clock
-        Assume(tttop.io_in[tttop.pins.clkconfig_1] == 0) # 1 khz clock
+        Assume(rst), # don't play with reset
+        Assume(tttop.ui_in[tttop.pins.clkconfig_0] == 0), # 1 khz clock
+        Assume(tttop.ui_in[tttop.pins.clkconfig_1] == 0) # 1 khz clock
     ]
     
     
@@ -148,8 +181,8 @@ def coverAndProve(m:Module, tttop:TinyTapeoutTop, includeCovers:bool=False):
     
     hist = History.new(m, numTicksUntilMeasured)
     hist.track(tttop.input_pulses)
-    hist.track(tttop.io_in)
-    hist.track(tttop.io_out)
+    hist.track(tttop.ui_in)
+    hist.track(tttop.uo_out)
     
     notesSegs = sprites.NoteSprites()
     
@@ -163,7 +196,7 @@ def coverAndProve(m:Module, tttop:TinyTapeoutTop, includeCovers:bool=False):
         with m.If(hist.followedSequence(tttop.input_pulses, inputSequence[100:200], startTick=100)):
             with m.If(hist.followedSequence(tttop.input_pulses, inputSequence[200:], startTick=200)):
                 with m.If(hist.ticks > (len(inputSequence) + 25)):
-                    m.d.comb += Assert(hist.snapshot(tttop.io_out, len(inputSequence)+numberOfPostSampleTicksForNoteDisplay)[:7] == notesSegs[notes.Scale.E].bits[:7])
+                    m.d.comb += Assert(hist.snapshot(tttop.uo_out, len(inputSequence)+numberOfPostSampleTicksForNoteDisplay)[:7] == notesSegs[notes.Scale.E].bits[:7])
 
 
     inputSequence = inputSequenceForSignal(tuner, 112)
@@ -174,13 +207,13 @@ def coverAndProve(m:Module, tttop:TinyTapeoutTop, includeCovers:bool=False):
         with m.If(hist.followedSequence(tttop.input_pulses, inputSequence[100:200], startTick=100)):
             with m.If(hist.followedSequence(tttop.input_pulses, inputSequence[200:], startTick=200)):
                 with m.If(hist.ticks > len(inputSequence) + 25):
-                    m.d.comb += Assert(hist.snapshot(tttop.io_out, len(inputSequence)+numberOfPostSampleTicksForNoteDisplay)[:7] == notesSegs[notes.Scale.A].bits[:7])
+                    m.d.comb += Assert(hist.snapshot(tttop.uo_out, len(inputSequence)+numberOfPostSampleTicksForNoteDisplay)[:7] == notesSegs[notes.Scale.A].bits[:7])
 
 
                     
     if includeCovers:
         with m.If(hist.ticks > 50):
-            m.d.comb += Cover(tttop.io_out == notesSegs[notes.Scale.G].bits)
+            m.d.comb += Cover(tttop.uo_out == notesSegs[notes.Scale.G].bits)
 
     
 
@@ -189,7 +222,7 @@ if __name__ == "__main__":
     from amaranth.cli import main
     from amaranth.back import verilog
     import os
-    top_name = os.environ.get("TOP", "psychogenic_neptunefixed")
+    top_name = os.environ.get("TOP", "tt_um_psychogenic_neptuneproportional")
 
     Test = False 
     if Test:
@@ -206,7 +239,7 @@ if __name__ == "__main__":
         main(m, ports=dev.ports())
     else:
         v = verilog.convert(
-            dev, name=top_name, ports=[dev.io_out, dev.io_in],
+            dev, name=top_name, ports=dev.tt_top_public_ports(),
             emit_src=False, strip_internal_attrs=True)
         
         print(v)

@@ -74,6 +74,7 @@ class Neptune(Elaboratable):
         # outputs
         self.displaySegments = Signal(8)
         self.displaySelect = Signal()
+        self.pulseCount = Signal(8)
         
         
     def ports(self):
@@ -108,7 +109,8 @@ class Neptune(Elaboratable):
             display.valueNote.eq(discrim.note),
             display.valueProxim.eq(Cat(discrim.match_exact, discrim.match_high, discrim.match_far)),
             self.displaySegments.eq(display.segments),
-            self.displaySelect.eq(display.proximitySelect)
+            self.displaySelect.eq(display.proximitySelect),
+            self.pulseCount.eq(inputPulseCounter.pulseCount)
             
             ]
         
