@@ -40,7 +40,8 @@ class PinLocations:
     def __init__(self):
         self.clkconfig_0 = 2
         self.clkconfig_1 = 3
-        self.input_pulses = 4
+        self.clkconfig_2 = 4
+        self.input_pulses = 5
 
 class TinyTapeoutTop(Elaboratable):
     def __init__(self, usingTuning:Tuning=StandardGuitarTuning,
@@ -139,7 +140,7 @@ class TinyTapeoutTop(Elaboratable):
         
         # inputs
         m.d.comb += [
-            tuner.clock_config.eq(Cat(self.ui_in[self.pins.clkconfig_0], self.ui_in[self.pins.clkconfig_1])),
+            tuner.clock_config.eq(Cat(self.ui_in[self.pins.clkconfig_0], self.ui_in[self.pins.clkconfig_1], self.ui_in[self.pins.clkconfig_2])),
             tuner.input_pulses.eq(self.input_pulses)    
         ]
 

@@ -30,6 +30,10 @@ class ClockName(Enum):
     Clock2KHz = 1
     Clock4KHz = 2
     Clock3277Hz = 3 # 32.768k / 10
+    Clock10KHz = 4
+    Clock32KHz = 5 # 32.768k
+    Clock40KHz = 6
+    Clock60KHz = 7
     
 class ClockSetting:
     def __init__(self, clockOpt, freqHz:int):
@@ -43,7 +47,11 @@ class ClockOptions:
          ClockSetting(ClockName.Clock1KHz, 1000),
          ClockSetting(ClockName.Clock2KHz, 2000),
          ClockSetting(ClockName.Clock4KHz, 4000),
-         ClockSetting(ClockName.Clock3277Hz, 3277)
+         ClockSetting(ClockName.Clock3277Hz, 3277),
+         ClockSetting(ClockName.Clock10KHz, 10000),
+         ClockSetting(ClockName.Clock32KHz, 32768),
+         ClockSetting(ClockName.Clock40KHz, 40000),
+         ClockSetting(ClockName.Clock60KHz, 60000)
         ]
     
     @classmethod 

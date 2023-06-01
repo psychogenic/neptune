@@ -158,7 +158,8 @@ class Neptune(Elaboratable):
                     Subsignal('signal', Pins('1', conn=pmod1, dir='i')),
                     Subsignal('clkconf0', Pins('2', conn=pmod1, dir='i')),
                     Subsignal('clkconf1', Pins('3', conn=pmod1, dir='i')),
-                    Subsignal('extclk', Pins('4', conn=pmod1, dir='i')),
+                    Subsignal('clkconf2', Pins('4', conn=pmod1, dir='i')),
+                    Subsignal('extclk', Pins('5', conn=pmod1, dir='i')),
                     # Subsignal('reset', Pins('4', conn=pmod1, dir='i')),
                     
                     # Subsignal('halfclock', Pins('3', conn=pmod1, dir='o')),
@@ -188,7 +189,7 @@ class Neptune(Elaboratable):
                 ClockSignal("sync").eq(devinputs.extclk), 
                 ### ResetSignal("sync").eq(self.io_in[1]),
                 self.input_pulses.eq(devinputs.signal),
-                self.clock_config.eq(Cat(devinputs.clkconf0, devinputs.clkconf1))
+                self.clock_config.eq(Cat(devinputs.clkconf0, devinputs.clkconf1, devinputs.clkconf2))
                 
             ]
 
