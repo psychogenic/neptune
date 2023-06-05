@@ -99,9 +99,9 @@ class PulseCounter(Elaboratable):
         m.d.sync += clockCount.eq(clockCount + 1)
         
         # how long do we keep counting?  Depends on clock config
+        ClockName.
         with m.Switch(self.clock_config):
-            for cset in [ClockName.Clock1KHz, ClockName.Clock2KHz, 
-                         ClockName.Clock3277Hz, ClockName.Clock4KHz]:
+            for cset in ClockName: ############ FAAAAAAAAAAAAAAAAAAAAAKKKKKKKKKKKKK -- did this the dumb way and it bit me
                 with m.Case(cset):
                     m.d.sync += singlePeriodClockCount.eq(ClockOptions.frequencyToTicksOver(ClockOptions.frequencyHz(cset), self.samplingDurationSeconds))
                 
