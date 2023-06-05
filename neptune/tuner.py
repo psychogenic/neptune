@@ -129,7 +129,8 @@ class Neptune(Elaboratable):
         # these values are all specific to the iCE40HX1K dev platform 
         # I'm using.
         pmod1 = ('pmod', 1) # j1
-        pmod2 = ('pmod', 6) # j6
+        pmod6 = ('pmod', 6) # j6
+        pmod5 = ('pmod', 5) # j5
         
         platform.add_resources([
            Resource('dualdisp', 0, 
@@ -144,10 +145,10 @@ class Neptune(Elaboratable):
                     Subsignal('cathode', Pins('10', conn=pmod1, dir='o')),
                     
                     
-                    Subsignal('aa', Pins('7', conn=pmod2, dir='o')),
-                    Subsignal('ab', Pins('8', conn=pmod2, dir='o')),
-                    Subsignal('ac', Pins('9', conn=pmod2, dir='o')),
-                    Subsignal('ad', Pins('10', conn=pmod2, dir='o')),
+                    Subsignal('aa', Pins('7', conn=pmod6, dir='o')),
+                    Subsignal('ab', Pins('8', conn=pmod6, dir='o')),
+                    Subsignal('ac', Pins('9', conn=pmod6, dir='o')),
+                    Subsignal('ad', Pins('10', conn=pmod6, dir='o')),
                     
                     
                     # using the ice blink40, we seem to want SB_LVCMOS,
@@ -155,11 +156,11 @@ class Neptune(Elaboratable):
                     Attrs(IO_STANDARD="SB_LVCMOS")
                 ),
            Resource('devinputs', 0, 
-                    Subsignal('signal', Pins('1', conn=pmod1, dir='i')),
-                    Subsignal('clkconf0', Pins('2', conn=pmod1, dir='i')),
-                    Subsignal('clkconf1', Pins('3', conn=pmod1, dir='i')),
-                    Subsignal('clkconf2', Pins('4', conn=pmod1, dir='i')),
-                    Subsignal('extclk', Pins('5', conn=pmod1, dir='i')),
+                    Subsignal('signal', Pins('1', conn=pmod5, dir='i')),
+                    Subsignal('clkconf0', Pins('7', conn=pmod5, dir='i')),
+                    Subsignal('clkconf1', Pins('8', conn=pmod5, dir='i')),
+                    Subsignal('clkconf2', Pins('9', conn=pmod5, dir='i')),
+                    Subsignal('extclk', Pins('4', conn=pmod5, dir='i')),
                     # Subsignal('reset', Pins('4', conn=pmod1, dir='i')),
                     
                     # Subsignal('halfclock', Pins('3', conn=pmod1, dir='o')),
@@ -352,10 +353,10 @@ if __name__ == "__main__":
     # allow us to run this directly
     from amaranth.cli import main
     
-    doBuild = False
-    doBurnAfterBuild = False
+    doBuild = True
+    doBurnAfterBuild = True
     
-    doSimulate = True
+    doSimulate = False
     Test = False
     
     if doBuild:
